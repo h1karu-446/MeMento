@@ -92,8 +92,6 @@
 Figmaで作成したワイヤーフレームは以下のリンクから確認できます。
 
 [Figma - MeMent wireframe](https://www.figma.com/design/khMarVlOfnx1SZFJeKYPWL/review-app-wireframe?m=auto&t=p39P2Tj89US4iDiE-6)
-
-## DB設計
  
 ### ER図
  
