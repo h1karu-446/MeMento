@@ -1,4 +1,4 @@
-# review app
+# MeMento
 
 > 映画や小説、音楽、その日あった些細なことなど、日々の体験と想いを記録に残す。
 
@@ -19,7 +19,7 @@
 
 体験は、言葉にしてはじめて自分のものになる。
 
-映画、小説、音楽等から得た感動や気づき言葉に変えアウトプットし、思考と感性を磨くための記録アプリ。
+映画、小説、音楽等から得た感動や気づきを言葉に変えアウトプットし、思考と感性を磨くための記録アプリ。
 
 日記機能も備え、日常のあらゆる体験をアウトプットの習慣へとつなげる。
 
@@ -91,7 +91,7 @@
 ### ワイヤーフレーム
 Figmaで作成したワイヤーフレームは以下のリンクから確認できます。
 
-[Figma - review app wireframe](https://www.figma.com/design/khMarVlOfnx1SZFJeKYPWL/review-app-wireframe?m=auto&t=p39P2Tj89US4iDiE-6)
+[Figma - MeMent wireframe](https://www.figma.com/design/khMarVlOfnx1SZFJeKYPWL/review-app-wireframe?m=auto&t=p39P2Tj89US4iDiE-6)
 
 ## DB設計
  
