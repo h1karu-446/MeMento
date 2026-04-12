@@ -70,9 +70,8 @@
 - [ ] 鑑賞・読書履歴に基づく次におすすめ作品の提案
 - [ ] 過去の記録をランダムに振り返るリマインダー機能
 
----
-
-## 画面一覧
+## 画面設計
+### 画面一覧
 
 | 画面名 | URL | 説明 |
 |--------|-----|------|
@@ -88,7 +87,11 @@
 | ワード一覧 | `/words` | 記録した語彙・言い回しの一覧 |
 | マイページ | `/mypage` | プロフィール・設定 |
 
----
+
+### ワイヤーフレーム
+Figmaで作成したワイヤーフレームは以下のリンクから確認できます。
+
+[Figma - review app wireframe](https://www.figma.com/design/khMarVlOfnx1SZFJeKYPWL/review-app-wireframe?m=auto&t=p39P2Tj89US4iDiE-6)
 
 ## DB設計
  
@@ -173,10 +176,6 @@ erDiagram
 | word | text | 語彙・言い回し |
 | description | text | 意味・説明 |
 | created_at | timestamp | 作成日時 |
-
-
-
-
 
 ## 非機能要件
 
