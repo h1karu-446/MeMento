@@ -32,8 +32,8 @@ export default async function LoginPage({ searchParams }: Props) {
 
         {/* ロゴ */}
         <div className="text-center mb-5">
-          <div className="inline-flex items-center justify-center w-32 h-30 rounded-xl">
-            <Image src="/logo_green.png" width={100} height={100} alt="MeMento" />
+          <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl">
+            <Image src="/logo_green.png" width={120} height={120} alt="MeMento" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Login to MeMento</h1>
         </div>

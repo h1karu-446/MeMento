@@ -27,11 +27,11 @@ export default async function SignUpPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex mt-15 justify-center bg-background px-4">
       <div className="w-full max-w-sm">
 
         {/* ロゴ */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl">
             <Image src="/logo_blue.png" width={120} height={120} alt="MeMento" />
           </div>
