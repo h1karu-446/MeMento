@@ -39,17 +39,15 @@ export default function ReviewsPage() {
         </Link>
       </div>
 
-      {/* 検索 */}
-      <input
-        type="text"
-        placeholder="タイトル・感想で検索..."
-        className="w-full px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
-      />
-
-      {/* フィルター・ソート */}
-      <div className="flex items-center justify-between mb-6">
-        {/* ジャンル絞り込み */}
-        <div className="flex gap-2">
+      {/* 検索・フィルター・ソート */}
+      <div className="flex items-center gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="タイトル・感想で検索..."
+          className="w-40 sm:w-56 md:w-72 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+        <div className="flex items-center gap-3 ml-auto">
+          <div className="flex gap-2">
           {filters.map((f) => (
             <button
               key={f}
@@ -63,22 +61,22 @@ export default function ReviewsPage() {
               {f}
             </button>
           ))}
-        </div>
-        {/* ソート */}
-        <div className="flex gap-1 bg-surface border border-black/10 rounded-lg p-0.5">
-          {sorts.map((s) => (
-            <button
-              key={s}
-              onClick={() => setActiveSort(s)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
-                activeSort === s
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:text-foreground'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+          </div>
+          <div className="flex gap-1 bg-surface border border-black/10 rounded-lg p-0.5">
+            {sorts.map((s) => (
+              <button
+                key={s}
+                onClick={() => setActiveSort(s)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
+                  activeSort === s
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-text-secondary hover:text-foreground'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

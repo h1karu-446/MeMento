@@ -36,11 +36,11 @@ export default function NewReviewPage() {
     <div className="p-4 md:p-8 w-full">
 
       {/* ヘッダー */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/reviews" className="flex items-center gap-1 text-sm text-text-secondary hover:text-foreground transition">
-          <ChevronLeft size={16} />
-          レビュー一覧
+        <div className="flex items-center gap-3 mb-6">
+        <Link href="/reviews" className="text-text-secondary hover:text-foreground transition">
+          <ChevronLeft size={20} />
         </Link>
+        <h1 className="text-xl font-bold text-foreground">レビューを作成</h1>
       </div>
 
       <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
