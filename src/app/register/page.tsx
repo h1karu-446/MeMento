@@ -4,13 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
 
 type Props = {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; success?: string }>
 }
 
 export default async function SignUpPage({ searchParams }: Props) {
-  const { error } = await searchParams
+  const { error, success } = await searchParams
 
-  async function SignIn(formData: FormData) {
+  async function signUp(formData: FormData) {
     'use server'
 
     const email = formData.get('email') as string
@@ -23,7 +23,7 @@ export default async function SignUpPage({ searchParams }: Props) {
       redirect('/register?error=signup_failed')
     }
 
-    redirect('/')
+    redirect('/register?success=check_email')
   }
 
   return (
@@ -32,7 +32,7 @@ export default async function SignUpPage({ searchParams }: Props) {
 
         {/* ロゴ */}
         <div className="text-center mb-5">
-          <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl">
+          <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl mb-1">
             <Image src="/logo_blue.png" width={120} height={120} alt="MeMento" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">SignUp for MeMento</h1>
@@ -40,6 +40,13 @@ export default async function SignUpPage({ searchParams }: Props) {
 
         {/* カード */}
         <div>
+          {/* 成功メッセージ */}
+          {success === 'check_email' && (
+            <div className="w-4/5 mx-auto mb-4 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200 text-secondary text-sm">
+              確認メールを送信しました。メールのリンクをクリックして登録を完了してください。
+            </div>
+          )}
+
           {/* エラーメッセージ */}
           {error === 'signup_failed' && (
             <div className="w-4/5 mx-auto mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
@@ -47,7 +54,7 @@ export default async function SignUpPage({ searchParams }: Props) {
             </div>
           )}
 
-          <form action={SignIn} className="space-y-4">
+          <form action={signUp} className="space-y-4">
             <div className="w-4/5 mx-auto">
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
                 メールアドレス
@@ -81,7 +88,7 @@ export default async function SignUpPage({ searchParams }: Props) {
             <div className="w-4/5 mx-auto">
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-lg bg-[#0191db] hover:bg-[#004dc6] text-white font-medium text-sm transition cursor-pointer"
+                className="w-full py-2.5 rounded-lg bg-secondary hover:bg-secondary-hover text-white font-medium text-sm transition cursor-pointer"
               >
                 SignUp
               </button>
@@ -92,7 +99,7 @@ export default async function SignUpPage({ searchParams }: Props) {
         {/* 新規登録リンク */}
         <p className="text-center text-sm text-text-secondary mt-6">
           アカウントをお持ちの方は{' '}
-          <Link href="/login" className="text-[#0191db] hover:underline font-medium">
+          <Link href="/login" className="text-secondary hover:underline font-medium">
             ログイン
           </Link>
         </p>
