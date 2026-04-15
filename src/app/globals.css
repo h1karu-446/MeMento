@@ -1,26 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F0F7F5;
+  --foreground: #1A1A1A;
+  --surface: #FFFFFF;
+  --primary: #2D9E89;
+  --primary-hover: #258070;
+  --accent: #6366F1;
+  --text-secondary: #6B7280;
+  --secondary: #0191db;
+  --secondary-hover: #0177b5;
 }
+
+/* ダークモードはマイページの設定から切り替える（OSの設定には追従しない）
+@media (prefers-color-scheme: dark) { ... } */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-text-secondary: var(--text-secondary);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
