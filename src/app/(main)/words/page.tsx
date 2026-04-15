@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 const words = [
   { id: '1',  word: 'モラトリアム', description: '「支払猶予」「一時停止」を意味する言葉。心理学において「大人としての社会的責任を猶予された準備期間（青年期）」。自己同一性（アイデンティティ）を確立するための、人生における猶予期間として使われます。', genre: '小説', sourceTitle: 'ノルウェイの森',   date: '3月27日' },
@@ -33,6 +34,7 @@ const words = [
   { id: '28', word: '蒙昧',        description: '知識や道理に暗いこと。',                   genre: '小説', sourceTitle: '人間失格',          date: '3月13日' },
   { id: '29', word: '凛然',        description: '態度や雰囲気がきりっとしている様子。',     genre: '映画', sourceTitle: 'ゴッドファーザー',  date: '3月12日' },
   { id: '30', word: '朦朧',        description: 'ぼんやりとかすんでいる様子。',             genre: '音楽', sourceTitle: 'Kind of Blue',      date: '3月11日' },
+  { id: '31', word: '溌剌',        description: '元気いっぱいな様子',             genre: 'その他',       date: '3月11日' },
 ]
 
 const genreColor: Record<string, string> = {
@@ -40,9 +42,10 @@ const genreColor: Record<string, string> = {
   小説: 'bg-blue-100 text-blue-700',
   音楽: 'bg-orange-100 text-orange-700',
   日記: 'bg-green-100 text-green-700',
+  その他: 'bg-gray-100 text-gray-600'
 }
 
-const filters = ['すべて', '映画', '小説', '音楽', '日記'] as const
+const filters = ['すべて', '映画', '小説', '音楽', '日記', 'その他'] as const
 
 type Word = typeof words[number]
 
@@ -75,47 +78,58 @@ export default function WordsPage() {
 
   return (
     <div className="p-4 md:p-8 w-full">
+      {/* ヘッダー */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">ワード</h1>
-        <div className="flex gap-1 bg-surface border border-black/10 rounded-lg p-0.5">
-          {(['list', 'test'] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setQuestionIndex(0); setShowAnswer(false); setCorrect(0); setAnswered(0) }}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
-                mode === m ? 'bg-primary text-white' : 'text-text-secondary hover:text-foreground'
-              }`}
-            >
-              {m === 'list' ? '一覧' : 'テスト'}
-            </button>
-          ))}
+        <Link
+          href="/words/new"
+          className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition"
+        >
+          + 新しいワード
+        </Link>
+      </div>
+
+      {/* 検索・フィルター・切り替え */}
+      <div className="flex items-center gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="語彙・意味で検索..."
+          className="w-40 sm:w-56 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+        <div className="flex items-center gap-3 ml-auto">
+          <div className="flex gap-2">
+            {filters.map((f) => (
+              <button
+                key={f}
+                onClick={() => { setActiveFilter(f); setPage(1) }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
+                  activeFilter === f
+                    ? 'bg-primary text-white'
+                    : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 bg-surface border border-black/10 rounded-lg p-0.5">
+            {(['list', 'test'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setQuestionIndex(0); setShowAnswer(false); setCorrect(0); setAnswered(0) }}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
+                  mode === m ? 'bg-primary text-white' : 'text-text-secondary hover:text-foreground'
+                }`}
+              >
+                {m === 'list' ? '一覧' : 'テスト'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {mode === 'list' && (
         <>
-          <div className="flex items-center gap-3 mb-6">
-            <input
-              type="text"
-              placeholder="語彙・意味で検索..."
-              className="flex-1 max-w-md px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <div className="flex gap-2 ml-auto">
-              {filters.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => { setActiveFilter(f); setPage(1) }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
-                    activeFilter === f
-                      ? 'bg-primary text-white'
-                      : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {pagedWords.map((w) => (

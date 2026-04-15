@@ -2,36 +2,54 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, LayoutDashboard, Star, BookOpen, CaseSensitive } from 'lucide-react'
 
 const navItems = [
-  { label: 'ダッシュボード', href: '/' },
-  { label: 'レビュー', href: '/reviews' },
-  { label: 'ダイアリー', href: '/diaries' },
-  { label: 'ワード', href: '/words' },
+  { label: 'ダッシュボード', href: '/',        icon: LayoutDashboard },
+  { label: 'レビュー',       href: '/reviews',  icon: Star },
+  { label: 'ダイアリー',     href: '/diaries',  icon: BookOpen },
+  { label: 'ワード',         href: '/words',    icon: CaseSensitive },
 ]
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const [open, setOpen] = useState(true)
 
   return (
     <div className="flex h-screen">
       {/* サイドバー */}
-      <aside className="w-60 flex flex-col bg-surface border-r border-black/5">
+      <aside className={`flex flex-col bg-surface border-r border-black/5 transition-all duration-300 ${open ? 'w-60' : 'w-16'}`}>
 
         {/* ロゴ */}
-        <div className="px-6 py-5 border-b border-black/5">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
-            </div>
-            <span className="font-bold text-foreground">MeMento</span>
-          </Link>
+        <div className="px-4 py-5 border-b border-black/5 flex items-center justify-between">
+          {open && (
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">M</span>
+              </div>
+              <span className="font-bold text-foreground">MeMento</span>
+            </Link>
+          )}
+          {!open && (
+            <Link href="/" className="mx-auto">
+              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-white text-xs font-bold">M</span>
+              </div>
+            </Link>
+          )}
+          {open && (
+            <button onClick={() => setOpen(false)} className="text-text-secondary hover:text-foreground transition cursor-pointer">
+              <ChevronLeft size={18} />
+            </button>
+          )}
         </div>
 
         {/* ナビゲーション */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-2 py-4 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href
+            const Icon = item.icon
             return (
               <Link
                 key={item.href}
@@ -40,27 +58,44 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-foreground hover:bg-black/5'
-                }`}
+                } ${!open ? 'justify-center' : ''}`}
+                title={!open ? item.label : undefined}
               >
-                {item.label}
+                <Icon size={18} className="flex-shrink-0" />
+                {open && item.label}
               </Link>
             )
           })}
         </nav>
 
+        {/* 開くボタン（閉じた時） */}
+        {!open && (
+          <div className="px-2 pb-3">
+            <button
+              onClick={() => setOpen(true)}
+              className="w-full flex justify-center py-2 text-text-secondary hover:text-foreground hover:bg-black/5 rounded-lg transition cursor-pointer"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+
         {/* ユーザー情報 */}
-        <div className="px-4 py-4 border-t border-black/5">
+        <div className="px-2 py-4 border-t border-black/5">
           <Link
             href="/mypage"
-            className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-black/5 transition"
+            className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-black/5 transition ${!open ? 'justify-center' : ''}`}
+            title={!open ? 'マイページ' : undefined}
           >
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
               U
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Your Name</p>
-              <p className="text-xs text-text-secondary truncate">you@example.com</p>
-            </div>
+            {open && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">Your Name</p>
+                <p className="text-xs text-text-secondary truncate">you@example.com</p>
+              </div>
+            )}
           </Link>
         </div>
 
