@@ -86,7 +86,7 @@ export default function ReviewsPage() {
           <Link key={review.id} href={`/reviews/${review.id}`} className="h-full">
             <div className="h-full flex flex-col bg-surface rounded-xl border border-black/5 overflow-hidden hover:shadow-md transition cursor-pointer group">
               {/* サムネイル */}
-              <div className="w-full h-36 bg-primary/10 group-hover:bg-primary/15 transition flex-shrink-0 flex items-center justify-center">
+              <div className="w-full h-[136px] bg-primary/10 group-hover:bg-primary/15 transition flex-shrink-0 flex items-center justify-center">
                 <span className="text-text-secondary text-xs">素材・サムネイル</span>
               </div>
               <div className="flex flex-col flex-1 p-4">
@@ -106,7 +106,7 @@ export default function ReviewsPage() {
       </div>
 
       {/* ページネーション */}
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-1 mt-6">
         {['«', '1', '2', '3', '»'].map((p) => (
           <button
             key={p}

@@ -77,7 +77,7 @@ export default function DiariesPage() {
       <div className="space-y-4 mb-8">
         {diaries.map((diary) => (
           <Link key={diary.id} href={`/diaries/${diary.id}`} className="block">
-            <div className="bg-surface rounded-xl border border-black/5 p-5 hover:shadow-md transition flex items-center gap-5 group">
+            <div className="bg-surface rounded-xl border border-black/5 px-5 py-[22px] hover:shadow-md transition flex items-center gap-5 group">
               <div className="w-16 h-16 rounded-xl bg-primary/10 flex-shrink-0 flex items-center justify-center">
                 <span className="text-primary text-xs font-medium">{diary.language === 'ja' ? '画像' : 'EN'}</span>
               </div>
@@ -103,7 +103,7 @@ export default function DiariesPage() {
       </div>
 
       {/* ページネーション */}
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-1 mt-6">
         {['«', '1', '2', '3', '»'].map((p) => (
           <button
             key={p}
