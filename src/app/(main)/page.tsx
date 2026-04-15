@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CaseSensitive, MessageSquareMore, NotebookPen } from 'lucide-react'
+import { CaseSensitive, Star, BookOpen } from 'lucide-react'
 
 // スタブデータ（後でSupabaseから取得）
 const todayWord = {
@@ -47,7 +47,7 @@ export default function DashboardPage() {
           >
             <div className='flex gap-x-1'>
               レビューを書く
-              <MessageSquareMore size={20}/>
+              <Star size={20}/>
             </div>
           </Link>
           <Link
@@ -56,11 +56,11 @@ export default function DashboardPage() {
           >
             <div className='flex gap-x-1'>
               日記をつける
-              <NotebookPen size={20}/>
+              <BookOpen size={20}/>
             </div>
           </Link>
           <Link
-            href="/diaries/new"
+            href="/words/new"
             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition"
           >
             <div className='flex gap-x-1'>
