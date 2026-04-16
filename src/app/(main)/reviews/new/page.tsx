@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { createReview } from '../actions'
 
 
 const genres = ['映画', '小説', '音楽'] as const
@@ -19,8 +20,17 @@ export default function NewReviewPage() {
     setRate(clamped)
     setRateText(String(clamped))
   }
+  const [title, setTitle] = useState('')
+  const [impressions, setImpressions] = useState('')
+  const [saving, setSaving] = useState(false)
   const [words, setWords] = useState<{ word: string; description: string }[]>([])
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
+
+  async function handleSave() {
+    if (!title.trim()) return alert('タイトルを入力してください')
+    setSaving(true)
+    await createReview({ title, genre: selectedGenre, rate, impressions, words })
+  }
 
   function addWord() {
     if (!wordInput.word.trim()) return
@@ -51,6 +61,8 @@ export default function NewReviewPage() {
             <input
               type="text"
               placeholder="例：ショーシャンクの空に"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
             />
           </div>
@@ -203,6 +215,8 @@ export default function NewReviewPage() {
           <label className="block text-sm font-medium text-foreground mb-1.5">感想</label>
           <textarea
             placeholder="観た感想・気づき・学んだことを自由に書いてください..."
+            value={impressions}
+            onChange={(e) => setImpressions(e.target.value)}
             className="flex-1 min-h-64 w-full px-4 py-3 rounded-xl border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           />
         </div>
@@ -219,9 +233,11 @@ export default function NewReviewPage() {
         </Link>
         <button
           type="button"
-          className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer"
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
         >
-          保存する
+          {saving ? '保存中...' : '保存する'}
         </button>
       </div>
 
