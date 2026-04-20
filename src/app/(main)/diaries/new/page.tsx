@@ -3,14 +3,22 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, Upload, Sparkles, ArrowLeftRight } from 'lucide-react'
+import { createDiary } from '../actions'
 
 export default function NewDiaryPage() {
-  const [words, setWords] = useState<{ word: string; description: string }[]>([
-    { word: '刹那', description: '極めて短い時間のこと' },
-    { word: '逡巡', description: 'ためらって決断できないこと' },
-  ])
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [words, setWords] = useState<{ word: string; description: string }[]>([])
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
-  const [showAiResult, setShowAiResult] = useState(true)
+  const [showAiResult, setShowAiResult] = useState(false)
+
+  async function handleSave() {
+    if (!title.trim()) return alert('タイトルを入力してください')
+    if (!body.trim()) return alert('本文を入力してください')
+    setSaving(true)
+    await createDiary({ title, body, language: 'ja', words })
+  }
 
   function addWord() {
     if (!wordInput.word.trim()) return
@@ -44,6 +52,8 @@ export default function NewDiaryPage() {
             <input
               type="text"
               placeholder="例：今日の振り返り"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
             />
           </div>
@@ -65,6 +75,8 @@ export default function NewDiaryPage() {
                 </div>
                 <textarea
                   placeholder="今日感じたこと、学んだことを自由に書いてください..."
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
                   className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-48 border border-black/10 rounded-xl"
                 />
               </div>
@@ -183,9 +195,11 @@ export default function NewDiaryPage() {
         </Link>
         <button
           type="button"
-          className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer"
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
         >
-          保存する
+          {saving ? '保存中...' : '保存する'}
         </button>
       </div>
 

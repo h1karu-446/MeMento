@@ -5,7 +5,7 @@ import ReviewsList from './ReviewsList'
 export default async function ReviewsPage() {
   const supabase = await createClient()
 
-  const { data: reviews, error } = await supabase   //reviewsでエイリアスしてる
+  const { data: reviews, error } = await supabase
     .from('reviews')
     .select('*')
     .order('created_at', { ascending: false })
