@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { createWord } from '../actions'
 
 const genres = ['映画', '小説', '音楽', '日記', 'その他'] as const
 
@@ -11,6 +12,14 @@ export default function NewWordPage() {
   const [word, setWord] = useState('')
   const [description, setDescription] = useState('')
   const [sourceTitle, setSourceTitle] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (!word.trim()) return alert('語彙を入力してください')
+    if (!description.trim()) return alert('意味・説明を入力してください')
+    setSaving(true)
+    await createWord({ word, description })
+  }
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -92,9 +101,11 @@ export default function NewWordPage() {
           </Link>
           <button
             type="button"
-            className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
           >
-            保存する
+            {saving ? '保存中...' : '保存する'}
           </button>
         </div>
 
