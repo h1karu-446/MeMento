@@ -26,12 +26,26 @@ function formatDate(dateStr: string) {
   return `${d.getMonth() + 1}月${d.getDate()}日`
 }
 
+function renderStars(rate: number) {
+  const full = Math.floor(rate)
+  const half = rate % 1 >= 0.5
+  return (
+    <span className="inline-flex text-yellow-400">
+      {'★'.repeat(full)}
+      {half && <span>☆</span>}
+    </span>
+  )
+}
+
 export default function ReviewsList({ reviews }: { reviews: Review[] }) {
   const [activeFilter, setActiveFilter] = useState<typeof filters[number]>('すべて')
   const [activeSort, setActiveSort] = useState<typeof sorts[number]>('新しい順')
+  const [searchQuery, setSearchQuery] = useState('')
 
+  const q = searchQuery.toLowerCase()
   const filtered = reviews
     .filter((r) => activeFilter === 'すべて' || r.genre === activeFilter)
+    .filter((r) => !q || r.title.toLowerCase().includes(q) || r.impressions.toLowerCase().includes(q))
     .sort((a, b) => {
       const diff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       return activeSort === '新しい順' ? diff : -diff
@@ -44,6 +58,8 @@ export default function ReviewsList({ reviews }: { reviews: Review[] }) {
         <input
           type="text"
           placeholder="タイトル・感想で検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-40 sm:w-56 md:w-72 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
         <div className="flex items-center gap-3 ml-auto">
@@ -82,7 +98,7 @@ export default function ReviewsList({ reviews }: { reviews: Review[] }) {
 
       {/* グリッド */}
       {filtered.length === 0 ? (
-        <p className="text-text-secondary text-sm text-center py-20">レビューがまだありません</p>
+        <p className="text-text-secondary text-sm text-center py-20">{q ? '検索結果がありません' : 'レビューがまだありません'}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {filtered.map((review) => (
@@ -99,7 +115,7 @@ export default function ReviewsList({ reviews }: { reviews: Review[] }) {
                   <p className="text-sm font-semibold text-foreground mt-2 mb-1">{review.title}</p>
                   <p className="text-xs text-text-secondary line-clamp-2">{review.impressions}</p>
                   <div className="flex items-center justify-between mt-auto pt-3">
-                    <span className="text-yellow-500 text-xs">{'★'.repeat(review.rate)}</span>
+                    <span className="text-xs">{renderStars(review.rate)}</span>
                     <span className="text-xs text-text-secondary">{formatDate(review.created_at)}</span>
                   </div>
                 </div>

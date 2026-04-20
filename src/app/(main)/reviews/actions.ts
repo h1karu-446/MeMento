@@ -39,6 +39,8 @@ export async function createReview(data: {
         description: w.description,
         review_id: review.id,
         user_id: user.id,
+        genre: data.genre,
+        source_title: data.title,
       }))
     )
   }

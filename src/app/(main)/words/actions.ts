@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation'
 export async function createWord(data: {
   word: string
   description: string
-  
+  genre?: string
+  source_title?: string
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -14,7 +15,13 @@ export async function createWord(data: {
 
   const { error } = await supabase
     .from('words')
-    .insert({ word: data.word, description: data.description, user_id: user.id })
+    .insert({
+      word: data.word,
+      description: data.description,
+      genre: data.genre || null,
+      source_title: data.source_title || null,
+      user_id: user.id,
+    })
 
   if (error) throw new Error(error.message)
 

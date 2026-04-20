@@ -23,12 +23,15 @@ function formatDate(dateStr: string) {
 export default function DiariesList({ diaries }: { diaries: Diary[] }) {
   const [activeFilter, setActiveFilter] = useState<typeof filters[number]>('すべて')
   const [activeSort, setActiveSort] = useState<typeof sorts[number]>('新しい順')
+  const [searchQuery, setSearchQuery] = useState('')
 
+  const q = searchQuery.toLowerCase()
   const filtered = diaries
     .filter((d) => {
       if (activeFilter === 'すべて') return true
       return activeFilter === '日本語' ? d.language === 'ja' : d.language === 'en'
     })
+    .filter((d) => !q || d.title.toLowerCase().includes(q) || d.body.toLowerCase().includes(q))
     .sort((a, b) => {
       const diff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       return activeSort === '新しい順' ? diff : -diff
@@ -39,7 +42,9 @@ export default function DiariesList({ diaries }: { diaries: Diary[] }) {
       <div className="flex items-center gap-3 mb-6">
         <input
           type="text"
-          placeholder="タイトル・本文・日付で検索..."
+          placeholder="タイトル・本文で検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-40 sm:w-56 md:w-72 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
         <div className="flex items-center gap-3 ml-auto">
@@ -63,7 +68,7 @@ export default function DiariesList({ diaries }: { diaries: Diary[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-text-secondary text-sm text-center py-20">日記がまだありません</p>
+        <p className="text-text-secondary text-sm text-center py-20">{q ? '検索結果がありません' : '日記がまだありません'}</p>
       ) : (
         <div className="space-y-4 mb-8">
           {filtered.map((diary) => (

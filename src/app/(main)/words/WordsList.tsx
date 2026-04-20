@@ -8,10 +8,8 @@ type Word = {
   word: string
   description: string
   created_at: string
-  review_id: string | null
-  diary_id: string | null
-  reviews: { genre: string; title: string } | null
-  diaries: { title: string } | null
+  genre: string | null
+  source_title: string | null
 }
 
 const genreColor: Record<string, string> = {
@@ -22,16 +20,14 @@ const genreColor: Record<string, string> = {
   その他: 'bg-gray-100 text-gray-600',
 }
 
-const filters = ['すべて', '映画', '小説', '音楽', '日記'] as const
+const filters = ['すべて', '映画', '小説', '音楽', '日記', 'その他'] as const
 
 function getGenre(w: Word): string {
-  if (w.reviews) return w.reviews.genre
-  if (w.diary_id) return '日記'
-  return 'その他'
+  return w.genre ?? 'その他'
 }
 
 function getSourceTitle(w: Word): string {
-  return w.reviews?.title ?? w.diaries?.title ?? ''
+  return w.source_title ?? ''
 }
 
 function formatDate(dateStr: string) {
@@ -43,6 +39,7 @@ const PAGE_SIZE = 15
 
 export default function WordsList({ words }: { words: Word[] }) {
   const [activeFilter, setActiveFilter] = useState<typeof filters[number]>('すべて')
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedWord, setSelectedWord] = useState<Word | null>(null)
   const [page, setPage] = useState(1)
 
@@ -53,9 +50,10 @@ export default function WordsList({ words }: { words: Word[] }) {
   const [correct, setCorrect] = useState(0)
   const [answered, setAnswered] = useState(0)
 
-  const filteredWords = words.filter((w) =>
-    activeFilter === 'すべて' || getGenre(w) === activeFilter
-  )
+  const q = searchQuery.toLowerCase()
+  const filteredWords = words
+    .filter((w) => activeFilter === 'すべて' || getGenre(w) === activeFilter)
+    .filter((w) => !q || w.word.toLowerCase().includes(q) || w.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(filteredWords.length / PAGE_SIZE))
   const pagedWords = filteredWords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -78,6 +76,8 @@ export default function WordsList({ words }: { words: Word[] }) {
         <input
           type="text"
           placeholder="語彙・意味で検索..."
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
           className="w-40 sm:w-56 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
         <div className="flex items-center gap-3 ml-auto">
@@ -107,7 +107,7 @@ export default function WordsList({ words }: { words: Word[] }) {
       {mode === 'list' && (
         <>
           {filteredWords.length === 0 ? (
-            <p className="text-text-secondary text-sm text-center py-20">ワードがまだありません</p>
+            <p className="text-text-secondary text-sm text-center py-20">{q ? '検索結果がありません' : 'ワードがまだありません'}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {pagedWords.map((w) => {
@@ -120,7 +120,6 @@ export default function WordsList({ words }: { words: Word[] }) {
                     <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${genreColor[genre] ?? 'bg-gray-100 text-gray-600'}`}>{genre}</span>
                       <span className="text-xs text-text-secondary truncate">{getSourceTitle(w)}</span>
-                      <span className="text-xs text-text-secondary ml-auto">{formatDate(w.created_at)}</span>
                     </div>
                   </div>
                 )

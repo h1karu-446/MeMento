@@ -7,7 +7,8 @@ import { createDiary } from '../actions'
 
 export default function NewDiaryPage() {
   const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
+  const [bodyJa, setBodyJa] = useState('')
+  const [bodyEn, setBodyEn] = useState('')
   const [saving, setSaving] = useState(false)
   const [words, setWords] = useState<{ word: string; description: string }[]>([])
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
@@ -15,9 +16,11 @@ export default function NewDiaryPage() {
 
   async function handleSave() {
     if (!title.trim()) return alert('タイトルを入力してください')
-    if (!body.trim()) return alert('本文を入力してください')
+    if (!bodyJa.trim() && !bodyEn.trim()) return alert('本文を入力してください')
     setSaving(true)
-    await createDiary({ title, body, language: 'ja', words })
+    const body = bodyJa.trim() || bodyEn.trim()
+    const language = bodyJa.trim() ? 'ja' : 'en'
+    await createDiary({ title, body, language, words })
   }
 
   function addWord() {
@@ -75,8 +78,8 @@ export default function NewDiaryPage() {
                 </div>
                 <textarea
                   placeholder="今日感じたこと、学んだことを自由に書いてください..."
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
+                  value={bodyJa}
+                  onChange={(e) => setBodyJa(e.target.value)}
                   className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-48 border border-black/10 rounded-xl"
                 />
               </div>
@@ -88,6 +91,8 @@ export default function NewDiaryPage() {
                 </div>
                 <textarea
                   placeholder="自動翻訳されます..."
+                  value={bodyEn}
+                  onChange={(e) => setBodyEn(e.target.value)}
                   className="flex-1 w-full px-4 py-3 bg-surface text-sm text-text-secondary placeholder:text-text-secondary focus:outline-none resize-none min-h-48 border border-black/10 rounded-xl"
                 />
               </div>
@@ -140,7 +145,6 @@ export default function NewDiaryPage() {
           <div className="flex-1 bg-surface rounded-xl border border-black/5 p-4">
             <div className="flex items-center justify-between mb-4">
               <label className="text-sm font-medium text-foreground">記録したワード</label>
-              <button className="text-xs text-primary hover:underline cursor-pointer">+ 追加</button>
             </div>
 
             {/* 既存ワード */}

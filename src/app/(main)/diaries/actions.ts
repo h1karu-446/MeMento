@@ -23,7 +23,14 @@ export async function createDiary(data: {
 
   if (data.words.length > 0) {
     await supabase.from('words').insert(
-      data.words.map((w) => ({ word: w.word, description: w.description, diary_id: diary.id, user_id: user.id }))
+      data.words.map((w) => ({
+        word: w.word,
+        description: w.description,
+        diary_id: diary.id,
+        user_id: user.id,
+        genre: '日記',
+        source_title: data.title,
+      }))
     )
   }
 

@@ -10,6 +10,17 @@ const genreColor: Record<string, string> = {
   音楽: 'bg-orange-100 text-orange-700',
 }
 
+function renderStars(rate: number) {
+  const full = Math.floor(rate)
+  const half = rate % 1 >= 0.5
+  return (
+    <span className="inline-flex text-yellow-400">
+      {'★'.repeat(full)}
+      {half && <span>☆</span>}
+    </span>
+  )
+}
+
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
@@ -66,8 +77,8 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ i
             </span>
             <h2 className="text-xl font-bold text-foreground mt-2 mb-1">{review.title}</h2>
             <p className="text-yellow-500 text-sm mb-1">
-              {'★'.repeat(review.rate)}{' '}
-              <span className="text-text-secondary">{review.rate}.0</span>
+              {renderStars(review.rate)}{' '}
+              <span className="text-text-secondary">{review.rate}</span>
             </p>
             <p className="text-xs text-text-secondary">{formatDate(review.created_at)}</p>
           </div>

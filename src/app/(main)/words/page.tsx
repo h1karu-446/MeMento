@@ -7,7 +7,7 @@ export default async function WordsPage() {
 
   const { data: words, error } = await supabase
     .from('words')
-    .select('*, reviews(genre, title), diaries(title)')
+    .select('id, word, description, genre, source_title, created_at')
     .order('created_at', { ascending: false })
 
   if (error) console.error(error)
@@ -17,7 +17,7 @@ export default async function WordsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">ワード</h1>
         <Link href="/words/new" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition">
-          + 追加
+          + ワードを追加
         </Link>
       </div>
       <WordsList words={words ?? []} />

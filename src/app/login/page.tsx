@@ -121,8 +121,15 @@ export default async function LoginPage({ searchParams }: Props) {
           </button>
         </div>
 
+        {/* パスワード忘れ */}
+        <p className="text-center text-sm text-text-secondary mt-4">
+          <Link href="/forgot-password" className="text-xs text-text-secondary hover:text-primary transition">
+            パスワードをお忘れの方はこちら
+          </Link>
+        </p>
+
         {/* 新規登録リンク */}
-        <p className="text-center text-sm text-text-secondary mt-6">
+        <p className="text-center text-sm text-text-secondary mt-3">
           アカウントをお持ちでない方は{' '}
           <Link href="/register" className="text-primary hover:underline font-medium">
             新規登録

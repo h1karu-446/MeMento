@@ -18,7 +18,7 @@ export default function NewWordPage() {
     if (!word.trim()) return alert('語彙を入力してください')
     if (!description.trim()) return alert('意味・説明を入力してください')
     setSaving(true)
-    await createWord({ word, description })
+    await createWord({ word, description, genre: genre || undefined, source_title: sourceTitle || undefined })
   }
 
   return (
