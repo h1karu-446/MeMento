@@ -48,6 +48,45 @@ export async function createReview(data: {
   redirect('/reviews')
 }
 
+export async function updateReview(
+  reviewId: string,
+  data: {
+    title: string
+    genre: string
+    rate: number
+    impressions: string
+    words: { word: string; description: string }[]
+  }
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('reviews')
+    .update({ title: data.title, genre: data.genre, rate: data.rate, impressions: data.impressions })
+    .eq('id', reviewId)
+
+  if (error) throw new Error(error.message)
+
+  await supabase.from('words').delete().eq('review_id', reviewId)
+
+  if (data.words.length > 0) {
+    await supabase.from('words').insert(
+      data.words.map((w) => ({
+        word: w.word,
+        description: w.description,
+        review_id: reviewId,
+        user_id: user.id,
+        genre: data.genre,
+        source_title: data.title,
+      }))
+    )
+  }
+
+  redirect(`/reviews/${reviewId}`)
+}
+
 export async function deleteReview(reviewId: string) {
   const supabase = await createClient()
 
