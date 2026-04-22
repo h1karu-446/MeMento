@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, LayoutDashboard, Star, BookOpen, CaseSensitive } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { label: 'ダッシュボード', href: '/',        icon: LayoutDashboard },
@@ -15,6 +16,18 @@ const navItems = [
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data.user
+      if (!user) return
+      setUserEmail(user.email ?? '')
+      setUserName(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? '')
+    })
+  }, [])
 
   return (
     <div className="flex h-screen">
@@ -88,12 +101,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             title={!open ? 'マイページ' : undefined}
           >
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-              U
+              {userName ? userName[0].toUpperCase() : '?'}
             </div>
             {open && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">Your Name</p>
-                <p className="text-xs text-text-secondary truncate">you@example.com</p>
+                <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+                <p className="text-xs text-text-secondary truncate">{userEmail}</p>
               </div>
             )}
           </Link>
