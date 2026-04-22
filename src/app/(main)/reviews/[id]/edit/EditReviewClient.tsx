@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Sparkles, Undo2 } from 'lucide-react'
 import { updateReview } from '../../actions'
+import { proofreadText } from '@/lib/ai-actions'
 
 const genres = ['映画', '小説', '音楽'] as const
 type Genre = typeof genres[number]
@@ -36,11 +37,23 @@ export default function EditReviewClient({
   const [saving, setSaving] = useState(false)
   const [words, setWords] = useState<Word[]>(initialWords)
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
+  const [aiResult, setAiResult] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [prevText, setPrevText] = useState('')
 
   function applyRate(value: number) {
     const clamped = Math.min(5, Math.max(0, Math.round(value * 2) / 2))
     setRate(clamped)
     setRateText(String(clamped))
+  }
+
+  async function handleProofread() {
+    if (!impressions.trim()) return alert('感想を入力してください')
+    setAiLoading(true)
+    const res = await proofreadText(impressions, 'ja', 'review', { title, genre: selectedGenre })
+    setAiLoading(false)
+    if (!res.ok) return alert(`添削に失敗しました。\n${res.error}`)
+    setAiResult(res.result)
   }
 
   async function handleSave() {
@@ -221,14 +234,60 @@ export default function EditReviewClient({
           </div>
         </div>
 
-        {/* 右カラム：感想 */}
-        <div className="flex flex-col">
-          <label className="block text-sm font-medium text-foreground mb-1.5">感想</label>
-          <textarea
-            value={impressions}
-            onChange={(e) => setImpressions(e.target.value)}
-            className="flex-1 min-h-64 w-full px-4 py-3 rounded-xl border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-          />
+        {/* 右カラム：感想 + AI添削 */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col flex-1">
+            <label className="block text-sm font-medium text-foreground mb-1.5">感想</label>
+            <textarea
+              value={impressions}
+              onChange={(e) => setImpressions(e.target.value)}
+              className="flex-1 min-h-64 w-full px-4 py-3 rounded-xl border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            />
+          </div>
+          {/* AI文章添削 */}
+          <div className="rounded-xl border border-accent/25 bg-accent/5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} className="text-accent" />
+                <span className="text-sm font-medium text-accent">AI文章添削</span>
+              </div>
+              <button
+                onClick={handleProofread}
+                disabled={aiLoading}
+                className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+              >
+                {aiLoading ? '添削中...' : '添削する'}
+              </button>
+            </div>
+            <p className="text-sm text-foreground bg-surface rounded-lg px-4 py-3 border border-black/5 mb-3 whitespace-pre-line min-h-[3rem]">
+              {aiResult || '添削後の文章がここに表示されます。元の文章と見比べながら、適用するか選べます。'}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setPrevText(impressions); setImpressions(aiResult); setAiResult('') }}
+                disabled={!aiResult}
+                className="px-4 py-2 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-medium transition cursor-pointer disabled:opacity-30"
+              >
+                この内容で更新する
+              </button>
+              <button
+                onClick={() => setAiResult('')}
+                disabled={!aiResult}
+                className="px-4 py-2 rounded-lg border border-black/10 bg-surface text-xs font-medium text-foreground hover:bg-black/5 transition cursor-pointer disabled:opacity-30"
+              >
+                破棄する
+              </button>
+              {prevText && (
+                <button
+                  onClick={() => { setImpressions(prevText); setPrevText('') }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-orange-300 bg-orange-50 text-xs font-medium text-orange-600 hover:bg-orange-100 transition cursor-pointer"
+                >
+                  <Undo2 size={12} />
+                  元に戻す
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { deleteWord } from './actions'
 
 type Word = {
@@ -22,17 +22,22 @@ const genreColor: Record<string, string> = {
 
 const filters = ['すべて', '映画', '小説', '音楽', '日記', 'その他'] as const
 
-function getGenre(w: Word): string {
-  return w.genre ?? 'その他'
-}
+const SET_SIZE = 10
 
-function getSourceTitle(w: Word): string {
-  return w.source_title ?? ''
-}
-
+function getGenre(w: Word): string { return w.genre ?? 'その他' }
+function getSourceTitle(w: Word): string { return w.source_title ?? '' }
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
   return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
 }
 
 const PAGE_SIZE = 15
@@ -42,67 +47,111 @@ export default function WordsList({ words }: { words: Word[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedWord, setSelectedWord] = useState<Word | null>(null)
   const [page, setPage] = useState(1)
+  const [mode, setMode] = useState<'list' | 'test'>('list')
 
   // テストモード
-  const [mode, setMode] = useState<'list' | 'test'>('list')
+  const [shuffledAll, setShuffledAll] = useState<Word[]>([])  // フィルター結果をシャッフルした全件
+  const [setIndex, setSetIndex] = useState(0)                  // 現在のセット番号（0始まり）
+  const [testWords, setTestWords] = useState<Word[]>([])
   const [questionIndex, setQuestionIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
   const [correct, setCorrect] = useState(0)
   const [answered, setAnswered] = useState(0)
+  const [wrongWords, setWrongWords] = useState<Word[]>([])
+  const [finished, setFinished] = useState(false)
 
   const q = searchQuery.toLowerCase()
-  const filteredWords = words
-    .filter((w) => activeFilter === 'すべて' || getGenre(w) === activeFilter)
-    .filter((w) => !q || w.word.toLowerCase().includes(q) || w.description.toLowerCase().includes(q))
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const filteredWords = useMemo(() =>
+    words
+      .filter((w) => activeFilter === 'すべて' || getGenre(w) === activeFilter)
+      .filter((w) => !q || w.word.toLowerCase().includes(q) || w.description.toLowerCase().includes(q))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [words, activeFilter, q]
+  )
   const totalPages = Math.max(1, Math.ceil(filteredWords.length / PAGE_SIZE))
   const pagedWords = filteredWords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-
-  const testWords = words.slice(0, 10)
   const currentWord = testWords[questionIndex]
+  const totalSets = Math.ceil(shuffledAll.length / SET_SIZE)
+  const hasNextSet = (setIndex + 1) < totalSets
+
+  function beginSet(all: Word[], idx: number, currentTestWords: Word[]) {
+    setTestWords(currentTestWords)
+    setQuestionIndex(0)
+    setShowAnswer(false)
+    setCorrect(0)
+    setAnswered(0)
+    setWrongWords([])
+    setFinished(false)
+    setShuffledAll(all)
+    setSetIndex(idx)
+    setMode('test')
+  }
+
+  function startTest() {
+    const all = shuffle(filteredWords)
+    const first = all.slice(0, SET_SIZE)
+    beginSet(all, 0, first)
+  }
 
   function handleAnswer(isCorrect: boolean) {
-    setAnswered(a => a + 1)
     if (isCorrect) setCorrect(c => c + 1)
+    else setWrongWords(prev => [...prev, currentWord])
+    setAnswered(a => a + 1)
+
     if (questionIndex < testWords.length - 1) {
       setQuestionIndex(i => i + 1)
       setShowAnswer(false)
+    } else {
+      setFinished(true)
     }
+  }
+
+  function retryWrong() {
+    beginSet(shuffledAll, setIndex, shuffle(wrongWords))
+  }
+
+  function goNextSet() {
+    const nextIdx = setIndex + 1
+    const next = shuffledAll.slice(nextIdx * SET_SIZE, (nextIdx + 1) * SET_SIZE)
+    beginSet(shuffledAll, nextIdx, next)
+  }
+
+  function exitTest() {
+    setMode('list')
+    setFinished(false)
   }
 
   return (
     <>
-      {/* 検索・フィルター・切り替え */}
-      <div className="flex items-center gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="語彙・意味で検索..."
-          value={searchQuery}
-          onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
-          className="w-40 sm:w-56 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
-        />
-        <div className="flex items-center gap-3 ml-auto">
-          <div className="flex gap-2">
-            {filters.map((f) => (
-              <button key={f} onClick={() => { setActiveFilter(f); setPage(1) }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
-                  activeFilter === f ? 'bg-primary text-white' : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
-                }`}>{f}</button>
-            ))}
-          </div>
-          <div className="flex gap-1 bg-surface border border-black/10 rounded-lg p-0.5">
-            {(['list', 'test'] as const).map((m) => (
-              <button key={m}
-                onClick={() => { setMode(m); setQuestionIndex(0); setShowAnswer(false); setCorrect(0); setAnswered(0) }}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
-                  mode === m ? 'bg-primary text-white' : 'text-text-secondary hover:text-foreground'
-                }`}>
-                {m === 'list' ? '一覧' : 'テスト'}
-              </button>
-            ))}
+      {/* 検索・フィルター（テスト中は非表示） */}
+      {mode === 'list' && (
+        <div className="flex items-center gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="語彙・意味で検索..."
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+            className="w-40 sm:w-56 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="flex gap-2">
+              {filters.map((f) => (
+                <button key={f} onClick={() => { setActiveFilter(f); setPage(1) }}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
+                    activeFilter === f ? 'bg-primary text-white' : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
+                  }`}>{f}</button>
+              ))}
+            </div>
+            <button
+              onClick={startTest}
+              disabled={filteredWords.length === 0}
+              className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-40"
+            >
+              テスト開始
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 一覧モード */}
       {mode === 'list' && (
@@ -127,8 +176,6 @@ export default function WordsList({ words }: { words: Word[] }) {
               })}
             </div>
           )}
-
-          {/* ページネーション */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 mt-6">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
@@ -147,39 +194,82 @@ export default function WordsList({ words }: { words: Word[] }) {
       )}
 
       {/* テストモード */}
-      {mode === 'test' && currentWord && (
+      {mode === 'test' && (
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <span className="text-sm text-text-secondary whitespace-nowrap">問題 {questionIndex + 1} / {testWords.length}</span>
-            <div className="flex-1 h-2 bg-black/5 rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${((questionIndex + 1) / testWords.length) * 100}%` }} />
+
+          {/* 結果画面 */}
+          {finished ? (
+            <div className="flex flex-col items-center text-center py-12">
+              <p className="text-xs text-text-secondary mb-2">セット {setIndex + 1} / {totalSets} 結果</p>
+              <p className="text-5xl font-bold text-foreground mb-2">{correct} / {testWords.length}</p>
+              <p className="text-sm text-text-secondary mb-2">正解</p>
+              <p className="text-lg font-medium text-primary mb-10">
+                {correct === testWords.length ? '満点！完璧です' :
+                  correct >= testWords.length * 0.8 ? 'よくできました！' :
+                  correct >= testWords.length * 0.5 ? 'もう少し！' : '復習しましょう'}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={retryWrong}
+                  disabled={wrongWords.length === 0}
+                  className="px-6 py-3 rounded-xl bg-red-50 border border-red-200 text-red-500 font-medium hover:bg-red-100 transition cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                >
+                  間違えた {wrongWords.length} 問だけ再挑戦
+                </button>
+                <button
+                  onClick={goNextSet}
+                  disabled={!hasNextSet}
+                  className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium transition cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                >
+                  次のセットへ ({setIndex + 2} / {totalSets})
+                </button>
+                <button onClick={exitTest}
+                  className="px-6 py-3 rounded-xl border border-black/10 bg-surface text-foreground font-medium hover:bg-black/5 transition cursor-pointer">
+                  一覧に戻る
+                </button>
+              </div>
             </div>
-            <span className="text-sm text-text-secondary whitespace-nowrap">正解 {correct} / {answered}</span>
-          </div>
-          <div className="bg-surface rounded-2xl border border-black/5 p-10 text-center mb-4">
-            <p className="text-xs text-text-secondary mb-4">この語彙の意味は？</p>
-            <p className="text-4xl font-bold text-foreground mb-4">{currentWord.word}</p>
-            <p className="text-xs text-text-secondary mb-8">
-              ヒント：{getGenre(currentWord)}「{getSourceTitle(currentWord)}」から
-            </p>
-            {!showAnswer && (
-              <button onClick={() => setShowAnswer(true)}
-                className="px-6 py-2 rounded-lg border border-black/10 bg-background hover:bg-black/5 text-sm font-medium text-foreground transition cursor-pointer">
-                答えを見る
-              </button>
-            )}
-          </div>
-          {showAnswer && (
+          ) : (
             <>
-              <div className="bg-surface rounded-2xl border border-black/5 px-8 py-5 text-center mb-6 max-h-48 overflow-y-auto">
-                <p className="text-sm text-foreground whitespace-pre-line">{currentWord.description}</p>
+              {/* 進捗バー */}
+              <div className="flex items-center gap-4 mb-8">
+                <button onClick={exitTest} className="text-text-secondary hover:text-foreground text-xs transition cursor-pointer whitespace-nowrap">✕ 終了</button>
+                <div className="flex-1 h-2 bg-black/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(questionIndex / testWords.length) * 100}%` }} />
+                </div>
+                <span className="text-sm text-text-secondary whitespace-nowrap">{questionIndex + 1} / {testWords.length}</span>
+                <span className="text-sm text-text-secondary whitespace-nowrap">正解 {correct} / {answered}</span>
               </div>
-              <div className="flex justify-center gap-4">
-                <button onClick={() => handleAnswer(true)}
-                  className="px-10 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium transition cursor-pointer">正解</button>
-                <button onClick={() => handleAnswer(false)}
-                  className="px-10 py-3 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 font-medium transition cursor-pointer">不正解</button>
+
+              {/* 問題カード */}
+              <div className="bg-surface rounded-2xl border border-black/5 p-10 text-center mb-4">
+                <p className="text-xs text-text-secondary mb-4">この語彙の意味は？</p>
+                <p className="text-4xl font-bold text-foreground mb-4">{currentWord.word}</p>
+                <p className="text-xs text-text-secondary mb-8">
+                  ヒント：{getGenre(currentWord)}「{getSourceTitle(currentWord)}」から
+                </p>
+                {!showAnswer && (
+                  <button onClick={() => setShowAnswer(true)}
+                    className="px-6 py-2 rounded-lg border border-black/10 bg-background hover:bg-black/5 text-sm font-medium text-foreground transition cursor-pointer">
+                    答えを見る
+                  </button>
+                )}
               </div>
+
+              {/* 答え */}
+              {showAnswer && (
+                <>
+                  <div className="bg-surface rounded-2xl border border-black/5 px-8 py-5 text-center mb-6 max-h-48 overflow-y-auto">
+                    <p className="text-sm text-foreground whitespace-pre-line">{currentWord.description}</p>
+                  </div>
+                  <div className="flex justify-center gap-4">
+                    <button onClick={() => handleAnswer(true)}
+                      className="px-10 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-medium transition cursor-pointer">正解</button>
+                    <button onClick={() => handleAnswer(false)}
+                      className="px-10 py-3 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 font-medium transition cursor-pointer">不正解</button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

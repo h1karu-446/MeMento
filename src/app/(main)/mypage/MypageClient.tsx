@@ -38,7 +38,22 @@ export default function MypageClient({
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordSaving, setPasswordSaving] = useState(false)
+  const [showNameModal, setShowNameModal] = useState(false)
+  const [nameInput, setNameInput] = useState(displayName)
+  const [currentName, setCurrentName] = useState(displayName)
+  const [nameSaving, setNameSaving] = useState(false)
   const genreTotal = genres.reduce((sum, g) => sum + g.count, 0)
+
+  async function handleNameChange() {
+    if (!nameInput.trim()) return alert('名前を入力してください')
+    setNameSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ data: { full_name: nameInput.trim() } })
+    setNameSaving(false)
+    if (error) return alert('変更に失敗しました: ' + error.message)
+    setCurrentName(nameInput.trim())
+    setShowNameModal(false)
+  }
 
   async function handlePasswordChange() {
     if (newPassword.length < 6) return alert('パスワードは6文字以上で入力してください')
@@ -65,7 +80,7 @@ export default function MypageClient({
           <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold mb-3">
             {initials}
           </div>
-          <p className="text-base font-bold text-foreground">{displayName}</p>
+          <p className="text-base font-bold text-foreground">{currentName}</p>
           <p className="text-sm text-text-secondary mb-6">{email}</p>
 
           <p className="text-xs text-text-secondary mb-3">今週の記録</p>
@@ -132,6 +147,15 @@ export default function MypageClient({
             <h2 className="text-sm font-semibold text-foreground mb-4">アカウント設定</h2>
             <div className="space-y-0 divide-y divide-black/5">
               <div className="flex items-center justify-between py-3 text-sm">
+                <span className="text-foreground">アカウント名</span>
+                <button
+                  onClick={() => { setNameInput(currentName); setShowNameModal(true) }}
+                  className="text-text-secondary text-xs hover:text-foreground transition cursor-pointer"
+                >
+                  {currentName} ›
+                </button>
+              </div>
+              <div className="flex items-center justify-between py-3 text-sm">
                 <span className="text-foreground">メールアドレス</span>
                 <span className="text-text-secondary text-xs">{email}</span>
               </div>
@@ -171,6 +195,40 @@ export default function MypageClient({
 
         </div>
       </div>
+      {/* アカウント名変更モーダル */}
+      {showNameModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
+          onClick={() => setShowNameModal(false)}>
+          <div className="bg-surface rounded-2xl border border-black/5 shadow-xl w-full max-w-sm mx-4 p-8"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-base font-bold text-foreground">アカウント名の変更</p>
+              <button onClick={() => setShowNameModal(false)} className="text-text-secondary hover:text-foreground cursor-pointer">✕</button>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">新しい名前</label>
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="名前を入力"
+                className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-background text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+              />
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowNameModal(false)}
+                className="flex-1 py-2.5 rounded-lg border border-black/10 bg-surface text-sm font-medium text-foreground hover:bg-black/5 transition cursor-pointer">
+                キャンセル
+              </button>
+              <button onClick={handleNameChange} disabled={nameSaving}
+                className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50">
+                {nameSaving ? '変更中...' : '変更する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* パスワード変更モーダル */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
