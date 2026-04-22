@@ -3,23 +3,36 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, Plus, Sparkles, ArrowLeftRight } from 'lucide-react'
-import { createDiary } from '../actions'
+import { updateDiary } from '../../actions'
 
-export default function NewDiaryPage() {
-  const [title, setTitle] = useState('')
-  const [bodyJa, setBodyJa] = useState('')
-  const [bodyEn, setBodyEn] = useState('')
+type Word = { word: string; description: string }
+
+type Props = {
+  diaryId: string
+  initialTitle: string
+  initialBody: string
+  initialLanguage: string
+  initialWords: Word[]
+}
+
+export default function EditDiaryClient({
+  diaryId,
+  initialTitle,
+  initialBody,
+  initialLanguage,
+  initialWords,
+}: Props) {
+  const [title, setTitle] = useState(initialTitle)
+  const [body, setBody] = useState(initialBody)
+  const [language, setLanguage] = useState(initialLanguage)
   const [saving, setSaving] = useState(false)
-  const [words, setWords] = useState<{ word: string; description: string }[]>([])
+  const [words, setWords] = useState<Word[]>(initialWords)
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
-
   async function handleSave() {
     if (!title.trim()) return alert('タイトルを入力してください')
-    if (!bodyJa.trim() && !bodyEn.trim()) return alert('本文を入力してください')
+    if (!body.trim()) return alert('本文を入力してください')
     setSaving(true)
-    const body = bodyJa.trim() || bodyEn.trim()
-    const language = bodyJa.trim() ? 'ja' : 'en'
-    await createDiary({ title, body, language, words })
+    await updateDiary(diaryId, { title, body, language, words })
   }
 
   function addWord() {
@@ -36,10 +49,10 @@ export default function NewDiaryPage() {
     <div className="p-4 md:p-8 w-full min-h-screen flex flex-col">
 
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/diaries" className="text-text-secondary hover:text-foreground transition">
+        <Link href={`/diaries/${diaryId}`} className="text-text-secondary hover:text-foreground transition">
           <ChevronLeft size={20} />
         </Link>
-        <h1 className="text-xl font-bold text-foreground">ダイアリーを作成</h1>
+        <h1 className="text-xl font-bold text-foreground">ダイアリーを編集</h1>
       </div>
 
       <div className="flex flex-col lg:grid lg:grid-cols-10 gap-6 flex-1">
@@ -52,46 +65,34 @@ export default function NewDiaryPage() {
             <label className="block text-sm font-medium text-foreground mb-1.5">タイトル</label>
             <input
               type="text"
-              placeholder="例：今日の振り返り"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
             />
           </div>
 
-          {/* 本文（日英並列） */}
+          {/* 本文 */}
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1">
               <label className="text-sm font-medium text-foreground">本文</label>
               <span className="text-xs text-text-secondary flex items-center gap-1">
                 <ArrowLeftRight size={12} />
-                入力すると自動翻訳
+                言語：
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="bg-transparent text-xs text-text-secondary focus:outline-none cursor-pointer"
+                >
+                  <option value="ja">日本語</option>
+                  <option value="en">English</option>
+                </select>
               </span>
             </div>
-            <div className="flex gap-3 flex-1">
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="pl-2 py-2">
-                  <span className="text-xs font-semibold text-primary">日本語</span>
-                </div>
-                <textarea
-                  placeholder="今日感じたこと、学んだことを自由に書いてください..."
-                  value={bodyJa}
-                  onChange={(e) => setBodyJa(e.target.value)}
-                  className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
-                />
-              </div>
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="pl-2 py-2">
-                  <span className="text-xs font-semibold text-accent">English</span>
-                </div>
-                <textarea
-                  placeholder="自動翻訳されます..."
-                  value={bodyEn}
-                  onChange={(e) => setBodyEn(e.target.value)}
-                  className="flex-1 w-full px-4 py-3 bg-surface text-sm text-text-secondary placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
-                />
-              </div>
-            </div>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
+            />
           </div>
 
           {/* AI文章添削 */}
@@ -187,7 +188,7 @@ export default function NewDiaryPage() {
       {/* フッター */}
       <div className="flex justify-end gap-3 mt-6">
         <Link
-          href="/diaries"
+          href={`/diaries/${diaryId}`}
           className="px-6 py-2.5 rounded-lg border border-black/10 bg-surface text-sm font-medium text-foreground hover:bg-black/5 transition"
         >
           キャンセル

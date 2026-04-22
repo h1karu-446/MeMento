@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -17,7 +17,7 @@ export default async function DiaryDetailPage({ params }: { params: Promise<{ id
   if (!diary) notFound()
 
   const { data: words } = await supabase
-    .from('words').select('*').eq('diary_id', id).order('created_at', { ascending: true })
+    .from('words').select('*').eq('diary_id', id).order('created_at', { ascending: false })
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -29,9 +29,13 @@ export default async function DiaryDetailPage({ params }: { params: Promise<{ id
           <h1 className="text-xl font-bold text-foreground">ダイアリー詳細</h1>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm font-medium hover:bg-black/5 transition cursor-pointer">
+          <Link
+            href={`/diaries/${diary.id}/edit`}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm font-medium hover:bg-black/5 transition"
+          >
+            <Pencil size={14} />
             編集する
-          </button>
+          </Link>
           <DeleteButton diaryId={diary.id} />
         </div>
       </div>

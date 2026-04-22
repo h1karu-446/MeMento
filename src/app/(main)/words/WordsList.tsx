@@ -54,6 +54,7 @@ export default function WordsList({ words }: { words: Word[] }) {
   const filteredWords = words
     .filter((w) => activeFilter === 'すべて' || getGenre(w) === activeFilter)
     .filter((w) => !q || w.word.toLowerCase().includes(q) || w.description.toLowerCase().includes(q))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const totalPages = Math.max(1, Math.ceil(filteredWords.length / PAGE_SIZE))
   const pagedWords = filteredWords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
