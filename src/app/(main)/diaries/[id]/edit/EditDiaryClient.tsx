@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Plus, Sparkles, ArrowLeftRight } from 'lucide-react'
+import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2 } from 'lucide-react'
 import { updateDiary } from '../../actions'
+import { proofreadText } from '@/lib/ai-actions'
 
 type Word = { word: string; description: string }
 
@@ -28,6 +29,18 @@ export default function EditDiaryClient({
   const [saving, setSaving] = useState(false)
   const [words, setWords] = useState<Word[]>(initialWords)
   const [wordInput, setWordInput] = useState({ word: '', description: '' })
+  const [aiResult, setAiResult] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [prevText, setPrevText] = useState('')
+  async function handleProofread() {
+    if (!body.trim()) return alert('本文を入力してください')
+    setAiLoading(true)
+    const res = await proofreadText(body, language as 'ja' | 'en', 'diary')
+    setAiLoading(false)
+    if (!res.ok) return alert(`添削に失敗しました。\n${res.error}`)
+    setAiResult(res.result)
+  }
+
   async function handleSave() {
     if (!title.trim()) return alert('タイトルを入力してください')
     if (!body.trim()) return alert('本文を入力してください')
@@ -102,20 +115,41 @@ export default function EditDiaryClient({
                 <Sparkles size={14} className="text-accent" />
                 <span className="text-sm font-medium text-accent">AI文章添削</span>
               </div>
-              <button className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium transition cursor-pointer">
-                添削する
+              <button
+                onClick={handleProofread}
+                disabled={aiLoading}
+                className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+              >
+                {aiLoading ? '添削中...' : '添削する'}
               </button>
             </div>
-            <p className="text-sm text-foreground bg-surface rounded-lg px-4 py-3 border border-black/5 mb-3">
-              添削後の文章がここに表示されます。元の文章と見比べながら、適用するか選べます。
+            <p className="text-sm text-foreground bg-surface rounded-lg px-4 py-3 border border-black/5 mb-3 whitespace-pre-line min-h-[3rem]">
+              {aiResult || '添削後の文章がここに表示されます。元の文章と見比べながら、適用するか選べます。'}
             </p>
             <div className="flex gap-2">
-              <button className="px-4 py-2 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-medium transition cursor-pointer">
+              <button
+                onClick={() => { setPrevText(body); setBody(aiResult); setAiResult('') }}
+                disabled={!aiResult}
+                className="px-4 py-2 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-medium transition cursor-pointer disabled:opacity-30"
+              >
                 この内容で更新する
               </button>
-              <button className="px-4 py-2 rounded-lg border border-black/10 bg-surface text-xs font-medium text-foreground hover:bg-black/5 transition cursor-pointer">
+              <button
+                onClick={() => setAiResult('')}
+                disabled={!aiResult}
+                className="px-4 py-2 rounded-lg border border-black/10 bg-surface text-xs font-medium text-foreground hover:bg-black/5 transition cursor-pointer disabled:opacity-30"
+              >
                 破棄する
               </button>
+              {prevText && (
+                <button
+                  onClick={() => { setBody(prevText); setPrevText('') }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-orange-300 bg-orange-50 text-xs font-medium text-orange-600 hover:bg-orange-100 transition cursor-pointer"
+                >
+                  <Undo2 size={12} />
+                  元に戻す
+                </button>
+              )}
             </div>
           </div>
 
