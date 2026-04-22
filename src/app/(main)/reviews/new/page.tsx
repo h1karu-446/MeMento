@@ -228,7 +228,7 @@ export default function NewReviewPage() {
           <div className="flex flex-col flex-1">
             <label className="block text-sm font-medium text-foreground mb-1.5">感想</label>
             <textarea
-              placeholder="観た感想・気づき・学んだことを自由に書いてください..."
+              placeholder="感想・気づき・学んだことを自由に書いてください..."
               value={impressions}
               onChange={(e) => setImpressions(e.target.value)}
               className="flex-1 min-h-64 w-full px-4 py-3 rounded-xl border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
