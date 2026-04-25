@@ -6,6 +6,8 @@ import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles } from 'lucide-react
 import { deleteWord } from './words/actions'
 import { generateRecommendation, type Recommendation } from '@/lib/ai-actions'
 import { genreColor } from '@/lib/genre-colors'
+import { formatDate, timeAgo } from '@/lib/utils'
+import { useToast } from '@/components/Toast'
 
 type Word = {
   id: number
@@ -38,13 +40,6 @@ type PastRecord =
   | { type: 'diary'; data: Diary }
   | { type: 'word'; data: Word & { created_at: string } }
 
-// recGenreColor は genreColor と同じなので共通化
-const recGenreColor = genreColor
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
 
 function renderStars(rate: number) {
   const full = Math.floor(rate)
@@ -57,15 +52,6 @@ function renderStars(rate: number) {
   )
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const days = Math.floor(diff / 86400000)
-  if (days === 0) return '今日'
-  if (days < 7) return `${days}日前`
-  if (days < 30) return `${Math.floor(days / 7)}週間前`
-  if (days < 365) return `${Math.floor(days / 30)}ヶ月前`
-  return `${Math.floor(days / 365)}年前`
-}
 
 function randomIndex(length: number) {
   return Math.floor(Math.random() * length)
@@ -95,6 +81,7 @@ export default function DashboardClient({
   initialRecommendations: Recommendation[] | null
   initialGeneratedAt: string | null
 }) {
+  const toast = useToast()
   const weekDays = ['月', '火', '水', '木', '金', '土', '日']
 
   // 今日のワード（全件表示されるまで重複しない）
@@ -157,7 +144,7 @@ export default function DashboardClient({
       userId,
     })
     setRecLoading(false)
-    if (!res.ok) return alert(`生成に失敗しました。\n${res.error}`)
+    if (!res.ok) return toast(`生成に失敗しました: ${res.error}`)
     setRecommendations(res.recommendations)
     setGeneratedAt(new Date().toISOString())
   }
@@ -327,7 +314,7 @@ export default function DashboardClient({
                   <span className="text-text-secondary text-xs">サムネイル</span>
                 </div>
                 <div className="p-3 flex flex-col flex-1">
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium self-start mb-1.5 ${recGenreColor[rec.genre] ?? 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium self-start mb-1.5 ${genreColor[rec.genre] ?? 'bg-gray-100 text-gray-600'}`}>
                     {rec.genre}
                   </span>
                   <p className="text-sm font-bold text-foreground mb-1">{rec.title}</p>

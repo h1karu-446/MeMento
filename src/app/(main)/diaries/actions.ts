@@ -54,6 +54,7 @@ export async function updateDiary(
     .from('diaries')
     .update({ title: data.title, body: data.body, language: data.language })
     .eq('id', diaryId)
+    .eq('user_id', user.id)
 
   if (error) throw new Error(error.message)
 
@@ -77,7 +78,9 @@ export async function updateDiary(
 
 export async function deleteDiary(diaryId: string) {
   const supabase = await createClient()
-  const { error } = await supabase.from('diaries').delete().eq('id', diaryId)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+  const { error } = await supabase.from('diaries').delete().eq('id', diaryId).eq('user_id', user.id)
   if (error) throw new Error(error.message)
   redirect('/diaries')
 }

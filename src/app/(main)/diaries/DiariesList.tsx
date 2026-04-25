@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { languageColor } from '@/lib/genre-colors'
+import { formatDate } from '@/lib/utils'
 
 type Diary = {
   id: string
@@ -17,10 +18,6 @@ const filters = ['すべて', '日本語', 'English'] as const
 const sorts = ['新しい順', '古い順'] as const
 const PAGE_SIZE = 4
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
 
 export default function DiariesList({ diaries }: { diaries: Diary[] }) {
   const [activeFilter, setActiveFilter] = useState<typeof filters[number]>('すべて')

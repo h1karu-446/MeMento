@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronLeft, Sparkles, Undo2 } from 'lucide-react'
 import { createReview } from '../actions'
 import { proofreadText } from '@/lib/ai-actions'
+import { useToast } from '@/components/Toast'
 
 
 const genres = ['映画', '小説', '音楽'] as const
@@ -29,18 +30,19 @@ export default function NewReviewPage() {
   const [aiResult, setAiResult] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [prevText, setPrevText] = useState('')
+  const toast = useToast()
 
   async function handleProofread() {
-    if (!impressions.trim()) return alert('感想を入力してください')
+    if (!impressions.trim()) return toast('感想を入力してください', 'info')
     setAiLoading(true)
     const res = await proofreadText(impressions, 'ja', 'review', { title, genre: selectedGenre })
     setAiLoading(false)
-    if (!res.ok) return alert(`添削に失敗しました。\n${res.error}`)
+    if (!res.ok) return toast(`添削に失敗しました: ${res.error}`)
     setAiResult(res.result)
   }
 
   async function handleSave() {
-    if (!title.trim()) return alert('タイトルを入力してください')
+    if (!title.trim()) return toast('タイトルを入力してください', 'info')
     setSaving(true)
     await createReview({ title, genre: selectedGenre, rate, impressions, words })
   }

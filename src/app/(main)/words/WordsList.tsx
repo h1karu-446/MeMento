@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { deleteWord } from './actions'
 import { genreColor } from '@/lib/genre-colors'
+import { formatDate } from '@/lib/utils'
 
 type Word = {
   id: number
@@ -20,10 +21,6 @@ const SET_SIZE = 10
 
 function getGenre(w: Word): string { return w.genre ?? 'その他' }
 function getSourceTitle(w: Word): string { return w.source_title ?? '' }
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signOut } from './actions'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/components/ThemeProvider'
+import { useToast } from '@/components/Toast'
 
 type Stats = {
   reviewTotal: number
@@ -35,6 +36,7 @@ export default function MypageClient({
   weekActivity: boolean[]
 }) {
   const { theme, toggle } = useTheme()
+  const toast = useToast()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -46,25 +48,25 @@ export default function MypageClient({
   const genreTotal = genres.reduce((sum, g) => sum + g.count, 0)
 
   async function handleNameChange() {
-    if (!nameInput.trim()) return alert('名前を入力してください')
+    if (!nameInput.trim()) return toast('名前を入力してください', 'info')
     setNameSaving(true)
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ data: { full_name: nameInput.trim() } })
     setNameSaving(false)
-    if (error) return alert('変更に失敗しました: ' + error.message)
+    if (error) return toast('変更に失敗しました: ' + error.message)
     setCurrentName(nameInput.trim())
     setShowNameModal(false)
   }
 
   async function handlePasswordChange() {
-    if (newPassword.length < 6) return alert('パスワードは6文字以上で入力してください')
-    if (newPassword !== confirmPassword) return alert('パスワードが一致しません')
+    if (newPassword.length < 6) return toast('パスワードは6文字以上で入力してください', 'info')
+    if (newPassword !== confirmPassword) return toast('パスワードが一致しません', 'info')
     setPasswordSaving(true)
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setPasswordSaving(false)
-    if (error) return alert('変更に失敗しました: ' + error.message)
-    alert('パスワードを変更しました')
+    if (error) return toast('変更に失敗しました: ' + error.message)
+    toast('パスワードを変更しました', 'success')
     setShowPasswordModal(false)
     setNewPassword('')
     setConfirmPassword('')

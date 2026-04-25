@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createWord } from '../actions'
+import { useToast } from '@/components/Toast'
 
 const genres = ['映画', '小説', '音楽', '日記', 'その他'] as const
 
@@ -13,10 +14,11 @@ export default function NewWordPage() {
   const [description, setDescription] = useState('')
   const [sourceTitle, setSourceTitle] = useState('')
   const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   async function handleSave() {
-    if (!word.trim()) return alert('語彙を入力してください')
-    if (!description.trim()) return alert('意味・説明を入力してください')
+    if (!word.trim()) return toast('語彙を入力してください', 'info')
+    if (!description.trim()) return toast('意味・説明を入力してください', 'info')
     setSaving(true)
     await createWord({ word, description, genre: genre || undefined, source_title: sourceTitle || undefined })
   }

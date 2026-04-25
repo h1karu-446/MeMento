@@ -3,23 +3,25 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/components/Toast'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const toast = useToast()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password.length < 6) return alert('パスワードは6文字以上で入力してください')
-    if (password !== confirm) return alert('パスワードが一致しません')
+    if (password.length < 6) return toast('パスワードは6文字以上で入力してください', 'info')
+    if (password !== confirm) return toast('パスワードが一致しません', 'info')
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
-    if (error) return alert('変更に失敗しました: ' + error.message)
-    alert('パスワードを変更しました')
+    if (error) return toast('変更に失敗しました: ' + error.message)
+    toast('パスワードを変更しました', 'success')
     router.push('/')
   }
 

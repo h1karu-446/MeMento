@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2 } from 'lucide-react'
 import { createDiary } from '../actions'
 import { proofreadText, translateTextClaude } from '@/lib/ai-actions'
+import { useToast } from '@/components/Toast'
 
 export default function NewDiaryPage() {
   const [title, setTitle] = useState('')
@@ -22,6 +23,7 @@ export default function NewDiaryPage() {
   const [lastEdited, setLastEdited] = useState<'ja' | 'en' | null>(null)
   const [lastTranslatedJa, setLastTranslatedJa] = useState('')
   const [lastTranslatedEn, setLastTranslatedEn] = useState('')
+  const toast = useToast()
 
   // 翻訳を実行してセットする共通処理（差分翻訳対応）
   async function translateAndSet(text: string, from: 'ja' | 'en', currentDest?: string) {
@@ -36,7 +38,7 @@ export default function NewDiaryPage() {
     setTranslating(true)
     const res = await translateTextClaude(newPart, from)
     setTranslating(false)
-    if (!res.ok) return alert(`翻訳に失敗しました。\n${res.error}`)
+    if (!res.ok) return toast(`翻訳に失敗しました: ${res.error}`)
 
     // 追記モード：既存の翻訳に新しい翻訳を足す
     // 全文モード：翻訳結果をそのままセット
@@ -68,12 +70,12 @@ export default function NewDiaryPage() {
   async function handleProofread() {
     const lang = lastEdited ?? (bodyJa.trim() ? 'ja' : 'en')
     const text = lang === 'ja' ? bodyJa.trim() : bodyEn.trim()
-    if (!text) return alert('本文を入力してください')
+    if (!text) return toast('本文を入力してください', 'info')
     setAiLang(lang)
     setAiLoading(true)
     const res = await proofreadText(text, lang, 'diary')
     setAiLoading(false)
-    if (!res.ok) return alert(`添削に失敗しました。\n${res.error}`)
+    if (!res.ok) return toast(`添削に失敗しました: ${res.error}`)
     setAiResult(res.result)
   }
 
@@ -96,8 +98,8 @@ export default function NewDiaryPage() {
   }
 
   async function handleSave() {
-    if (!title.trim()) return alert('タイトルを入力してください')
-    if (!bodyJa.trim() && !bodyEn.trim()) return alert('本文を入力してください')
+    if (!title.trim()) return toast('タイトルを入力してください', 'info')
+    if (!bodyJa.trim() && !bodyEn.trim()) return toast('本文を入力してください', 'info')
     setSaving(true)
     const body = bodyJa.trim() || bodyEn.trim()
     const language = bodyJa.trim() ? 'ja' : 'en'

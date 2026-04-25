@@ -30,6 +30,8 @@ export async function createWord(data: {
 
 export async function deleteWord(wordId: number) {
   const supabase = await createClient()
-  const { error } = await supabase.from('words').delete().eq('id', wordId)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+  const { error } = await supabase.from('words').delete().eq('id', wordId).eq('user_id', user.id)
   if (error) throw new Error(error.message)
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { genreColor } from '@/lib/genre-colors'
+import { formatDate } from '@/lib/utils'
 
 type Review = {
   id: string
@@ -17,10 +18,6 @@ const filters = ['すべて', '映画', '小説', '音楽'] as const
 const sorts = ['新しい順', '古い順'] as const
 const PAGE_SIZE = 9
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
 
 function renderStars(rate: number) {
   const full = Math.floor(rate)

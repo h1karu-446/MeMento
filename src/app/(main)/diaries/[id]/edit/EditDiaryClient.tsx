@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2 } from 'lucide-react'
 import { updateDiary } from '../../actions'
 import { proofreadText } from '@/lib/ai-actions'
+import { useToast } from '@/components/Toast'
 
 type Word = { word: string; description: string }
 
@@ -32,18 +33,20 @@ export default function EditDiaryClient({
   const [aiResult, setAiResult] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [prevText, setPrevText] = useState('')
+  const toast = useToast()
+
   async function handleProofread() {
-    if (!body.trim()) return alert('本文を入力してください')
+    if (!body.trim()) return toast('本文を入力してください', 'info')
     setAiLoading(true)
     const res = await proofreadText(body, language as 'ja' | 'en', 'diary')
     setAiLoading(false)
-    if (!res.ok) return alert(`添削に失敗しました。\n${res.error}`)
+    if (!res.ok) return toast(`添削に失敗しました: ${res.error}`)
     setAiResult(res.result)
   }
 
   async function handleSave() {
-    if (!title.trim()) return alert('タイトルを入力してください')
-    if (!body.trim()) return alert('本文を入力してください')
+    if (!title.trim()) return toast('タイトルを入力してください', 'info')
+    if (!body.trim()) return toast('本文を入力してください', 'info')
     setSaving(true)
     await updateDiary(diaryId, { title, body, language, words })
   }
