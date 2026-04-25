@@ -20,23 +20,29 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html
       lang="ja"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      {/* ページ表示前にダーククラスを適用してフラッシュを防ぐ */}
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `
-          try {
-            if (localStorage.getItem('theme') === 'dark') {
-              document.documentElement.classList.add('dark')
-            }
-          } catch(e) {}
-        `}} />
+        {/* 初期描画前にtheme適用（超重要） */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
