@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import DashboardClient from './DashboardClient'
+import type { Recommendation } from '@/lib/ai-actions'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // 今日のワード用
   const { data: words } = await supabase
@@ -59,6 +61,13 @@ export default async function DashboardPage() {
     else break
   }
 
+  // AIおすすめキャッシュを取得
+  const { data: cachedRec } = await supabase
+    .from('ai_recommendations')
+    .select('content, generated_at')
+    .eq('user_id', user?.id ?? '')
+    .single()
+
   return (
     <div className="p-4 md:p-8 w-full">
       <DashboardClient
@@ -67,6 +76,9 @@ export default async function DashboardPage() {
         diaries={diaries ?? []}
         weekActivity={weekActivity}
         streak={streak}
+        userId={user?.id ?? ''}
+        initialRecommendations={(cachedRec?.content ?? null) as Recommendation[] | null}
+        initialGeneratedAt={cachedRec?.generated_at ?? null}
       />
     </div>
   )

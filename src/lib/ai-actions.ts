@@ -154,3 +154,83 @@ export async function translateTextAzure(
   }
 }
 
+export type Recommendation = {
+  title: string
+  genre: string
+  reason: string
+  description: string
+}
+
+export async function generateRecommendation(input: {
+  reviews: { title: string; genre: string; rate: number }[]
+  userId: string
+}): Promise<{ ok: true; recommendations: Recommendation[] } | { ok: false; error: string }> {
+  const { createClient } = await import('@/lib/supabase/server')
+  const supabase = await createClient()
+
+  const genres = ['映画', '小説', '音楽'] as const
+  const picked = genres.flatMap((genre) => {
+    const byGenre = input.reviews.filter(r => r.genre === genre)
+    // シャッフルして最大10件
+    const shuffled = [...byGenre].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, 10)
+  })
+
+  const reviewSummary = picked.map(r =>
+    `・${r.title}（${r.genre}）★${r.rate}`
+  ).join('\n')
+
+  const prompt = `以下はあるユーザーのレビュー履歴です。
+
+【レビュー履歴】
+${reviewSummary || 'なし'}
+
+このユーザーの趣味・好みに基づいて、次に楽しめそうな作品を4つおすすめしてください。
+映画・小説・音楽をバランスよく含めてください。
+
+必ず以下のJSON配列だけを返してください。説明・前置き・コードブロック（\`\`\`）は絶対に不要です。JSONのみ出力してください。
+[
+  {
+    "title": "作品名",
+    "genre": "映画 or 小説 or 音楽",
+    "reason": "おすすめ理由（自然な文章で本屋の営業になったつもりで。ユーザーの履歴を分析している感じは出さない）",
+    "description": "作品のあらすじや概要（2〜3文）"
+  }
+]`
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const block = response.content[0]
+    if (block.type !== 'text') return { ok: false, error: '予期しないレスポンス形式です' }
+
+    // コードブロック（```json ... ```）を除去してからパース
+    const cleaned = block.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+
+    let recommendations: Recommendation[]
+    try {
+      recommendations = JSON.parse(cleaned)
+    } catch {
+      console.error('[generateRecommendation] JSONパース失敗:', cleaned)
+      return { ok: false, error: 'AIの返答をJSONとして解析できませんでした。もう一度試してください。' }
+    }
+
+    // DBにupsert（user_idで上書き）
+    await supabase.from('ai_recommendations').upsert({
+      user_id: input.userId,
+      content: recommendations,
+      generated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
+    return { ok: true, recommendations }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.error('[generateRecommendation]', message)
+    return { ok: false, error: message }
+  }
+}
+

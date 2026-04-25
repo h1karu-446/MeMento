@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { RefreshCw, Star, BookOpen, CaseSensitive } from 'lucide-react'
+import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles } from 'lucide-react'
 import { deleteWord } from './words/actions'
+import { generateRecommendation, type Recommendation } from '@/lib/ai-actions'
 
 type Word = {
   id: number
@@ -35,6 +36,12 @@ type PastRecord =
   | { type: 'review'; data: Review }
   | { type: 'diary'; data: Diary }
   | { type: 'word'; data: Word & { created_at: string } }
+
+const recGenreColor: Record<string, string> = {
+  映画: 'bg-yellow-100 text-yellow-700',
+  小説: 'bg-blue-100 text-blue-700',
+  音楽: 'bg-orange-100 text-orange-700',
+}
 
 const genreColor: Record<string, string> = {
   映画: 'bg-yellow-100 text-yellow-700',
@@ -74,18 +81,29 @@ function randomIndex(length: number) {
   return Math.floor(Math.random() * length)
 }
 
+function formatDateTime(dateStr: string) {
+  const d = new Date(dateStr)
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 export default function DashboardClient({
   words,
   reviews,
   diaries,
   weekActivity,
   streak,
+  userId,
+  initialRecommendations,
+  initialGeneratedAt,
 }: {
   words: Word[]
   reviews: Review[]
   diaries: Diary[]
   weekActivity: boolean[]
   streak: number
+  userId: string
+  initialRecommendations: Recommendation[] | null
+  initialGeneratedAt: string | null
 }) {
   const weekDays = ['月', '火', '水', '木', '金', '土', '日']
 
@@ -136,6 +154,23 @@ export default function DashboardClient({
 
   // ワード詳細モーダル（過去の記録がwordの場合用、今回はreview/diaryのみだが拡張用に残す）
   const [selectedWord, setSelectedWord] = useState<Word | null>(null)
+
+  // AIおすすめ
+  const [recommendations, setRecommendations] = useState<Recommendation[] | null>(initialRecommendations)
+  const [generatedAt, setGeneratedAt] = useState<string | null>(initialGeneratedAt)
+  const [recLoading, setRecLoading] = useState(false)
+
+  async function handleGenerateRecommendation() {
+    setRecLoading(true)
+    const res = await generateRecommendation({
+      reviews: reviews.map(r => ({ title: r.title, genre: r.genre, rate: r.rate })),
+      userId,
+    })
+    setRecLoading(false)
+    if (!res.ok) return alert(`生成に失敗しました。\n${res.error}`)
+    setRecommendations(res.recommendations)
+    setGeneratedAt(new Date().toISOString())
+  }
 
   return (
     <>
@@ -284,13 +319,49 @@ export default function DashboardClient({
 
       </div>
 
-      {/* AIによるおすすめ（保留） */}
+      {/* AIによるおすすめ */}
       <div className="bg-surface rounded-xl p-5 border border-black/5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-3 h-3 rounded-sm bg-accent" />
-          <p className="text-sm font-semibold text-foreground">AIによるおすすめ</p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-accent" />
+            <p className="text-sm font-semibold text-foreground">AIによるおすすめ</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {generatedAt && (
+              <span className="text-xs text-text-secondary">最終更新：{formatDateTime(generatedAt)}</span>
+            )}
+            <button
+              onClick={handleGenerateRecommendation}
+              disabled={recLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles size={12} />
+              {recLoading ? '生成中...' : recommendations ? '更新する' : 'おすすめを生成'}
+            </button>
+          </div>
         </div>
-        <p className="text-sm text-text-secondary">準備中です</p>
+
+        {recommendations ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {recommendations.map((rec, i) => (
+              <div key={i} className="bg-background rounded-xl border border-black/5 overflow-hidden flex flex-col">
+                <div className="w-full h-32 bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-text-secondary text-xs">サムネイル</span>
+                </div>
+                <div className="p-3 flex flex-col flex-1">
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium self-start mb-1.5 ${recGenreColor[rec.genre] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {rec.genre}
+                  </span>
+                  <p className="text-sm font-bold text-foreground mb-1">{rec.title}</p>
+                  <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 flex-1">{rec.description}</p>
+                  <p className="text-xs text-primary mt-2">{rec.reason}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-text-secondary">「おすすめを生成」を押すと、あなたの記録をもとにAIがおすすめ作品を提案します。</p>
+        )}
       </div>
 
       {/* ワード詳細モーダル */}
