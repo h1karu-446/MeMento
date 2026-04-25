@@ -94,7 +94,7 @@ export default function MypageClient({
             ))}
           </div>
           <p className="text-xs font-medium text-primary">
-            {stats.streak > 0 ? `${stats.streak}日連続記録中` : 'まだ記録がありません'}
+            {stats.streak > 0 ? `${stats.streak}日連続記録中` : '連続記録がありません'}
           </p>
         </div>
 

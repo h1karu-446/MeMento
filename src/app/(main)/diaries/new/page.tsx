@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2 } from 'lucide-react'
 import { createDiary } from '../actions'
-import { proofreadText } from '@/lib/ai-actions'
+import { proofreadText, translateTextClaude } from '@/lib/ai-actions'
 
 export default function NewDiaryPage() {
   const [title, setTitle] = useState('')
@@ -17,11 +17,58 @@ export default function NewDiaryPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiLang, setAiLang] = useState<'ja' | 'en'>('ja')
   const [prevText, setPrevText] = useState('')
+  const [prevLang, setPrevLang] = useState<'ja' | 'en'>('ja')
+  const [translating, setTranslating] = useState(false)
+  const [lastEdited, setLastEdited] = useState<'ja' | 'en' | null>(null)
+  const [lastTranslatedJa, setLastTranslatedJa] = useState('')
+  const [lastTranslatedEn, setLastTranslatedEn] = useState('')
+
+  // 翻訳を実行してセットする共通処理（差分翻訳対応）
+  async function translateAndSet(text: string, from: 'ja' | 'en', currentDest?: string) {
+    const lastSrc = from === 'ja' ? lastTranslatedJa : lastTranslatedEn
+
+    // 末尾に追記されたか判定
+    const isAppend = !!lastSrc && text.startsWith(lastSrc)
+    const newPart = isAppend ? text.slice(lastSrc.length).trim() : text
+
+    if (!newPart) return
+
+    setTranslating(true)
+    const res = await translateTextClaude(newPart, from)
+    setTranslating(false)
+    if (!res.ok) return alert(`翻訳に失敗しました。\n${res.error}`)
+
+    // 追記モード：既存の翻訳に新しい翻訳を足す
+    // 全文モード：翻訳結果をそのままセット
+    const dest = isAppend
+      ? (currentDest ?? (from === 'ja' ? bodyEn : bodyJa)) + '\n' + res.result
+      : res.result
+
+    if (from === 'ja') { setBodyEn(dest); setLastTranslatedJa(text) }
+    else { setBodyJa(dest); setLastTranslatedEn(text) }
+  }
+
+  async function handleTranslate(from: 'ja' | 'en') {
+    // 最後に自分でタイプしたフィールド以外からは翻訳しない
+    if (from !== lastEdited) return
+
+    const text = from === 'ja' ? bodyJa.trim() : bodyEn.trim()
+    if (!text) {
+      if (from === 'ja') setBodyEn('')
+      else setBodyJa('')
+      return
+    }
+    // 前回翻訳したテキストと同じなら何もしない
+    const lastTranslated = from === 'ja' ? lastTranslatedJa : lastTranslatedEn
+    if (text === lastTranslated) return
+
+    await translateAndSet(text, from)
+  }
 
   async function handleProofread() {
-    const text = bodyJa.trim() || bodyEn.trim()
+    const lang = lastEdited ?? (bodyJa.trim() ? 'ja' : 'en')
+    const text = lang === 'ja' ? bodyJa.trim() : bodyEn.trim()
     if (!text) return alert('本文を入力してください')
-    const lang = bodyJa.trim() ? 'ja' : 'en'
     setAiLang(lang)
     setAiLoading(true)
     const res = await proofreadText(text, lang, 'diary')
@@ -30,14 +77,20 @@ export default function NewDiaryPage() {
     setAiResult(res.result)
   }
 
-  function applyAiResult() {
-    if (aiLang === 'ja') { setPrevText(bodyJa); setBodyJa(aiResult) }
-    else { setPrevText(bodyEn); setBodyEn(aiResult) }
+  async function applyAiResult() {
+    const text = aiResult
+    const lang = aiLang
+    const currentDest = lang === 'ja' ? bodyEn : bodyJa
+    if (lang === 'ja') { setPrevText(bodyJa); setBodyJa(text) }
+    else { setPrevText(bodyEn); setBodyEn(text) }
+    setPrevLang(lang)  // 適用したときの言語を記録
     setAiResult('')
+    await translateAndSet(text, lang, currentDest)
   }
 
   function undoApply() {
-    if (aiLang === 'ja') setBodyJa(prevText)
+    // aiLang（現在の添削言語）ではなく適用時の言語で戻す
+    if (prevLang === 'ja') setBodyJa(prevText)
     else setBodyEn(prevText)
     setPrevText('')
   }
@@ -92,9 +145,9 @@ export default function NewDiaryPage() {
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1">
               <label className="text-sm font-medium text-foreground">本文</label>
-              <span className="text-xs text-text-secondary flex items-center gap-1">
-                <ArrowLeftRight size={12} />
-                入力すると自動翻訳
+              <span className={`text-xs flex items-center gap-1 ${translating ? 'text-accent' : 'text-text-secondary'}`}>
+                <ArrowLeftRight size={12} className={translating ? 'animate-spin' : ''} />
+                {translating ? '翻訳中...' : '入力後フォーカスを外すと自動翻訳'}
               </span>
             </div>
             <div className="flex gap-3 flex-1">
@@ -105,7 +158,8 @@ export default function NewDiaryPage() {
                 <textarea
                   placeholder="今日感じたこと、学んだことを自由に書いてください..."
                   value={bodyJa}
-                  onChange={(e) => setBodyJa(e.target.value)}
+                  onChange={(e) => { setBodyJa(e.target.value); setLastEdited('ja') }}
+                  onBlur={() => handleTranslate('ja')}
                   className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
                 />
               </div>
@@ -116,8 +170,9 @@ export default function NewDiaryPage() {
                 <textarea
                   placeholder="自動翻訳されます..."
                   value={bodyEn}
-                  onChange={(e) => setBodyEn(e.target.value)}
-                  className="flex-1 w-full px-4 py-3 bg-surface text-sm text-text-secondary placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
+                  onChange={(e) => { setBodyEn(e.target.value); setLastEdited('en') }}
+                  onBlur={() => handleTranslate('en')}
+                  className="flex-1 w-full px-4 py-3 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none resize-none min-h-32 border border-black/10 rounded-xl"
                 />
               </div>
             </div>
@@ -188,10 +243,6 @@ export default function NewDiaryPage() {
           <div className="flex-1 bg-surface rounded-xl border border-black/5 p-4">
             <div className="flex items-center justify-between mb-4">
               <label className="text-sm font-medium text-foreground">記録した語彙・表現</label>
-              <span className="text-xs font-medium text-primary flex items-center gap-0.5">
-                <Plus size={12} />
-                追加
-              </span>
             </div>
 
             <div className="space-y-3 mb-4">
