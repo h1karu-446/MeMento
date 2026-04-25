@@ -123,7 +123,7 @@ export default function DashboardClient({
     ...diaries.map(d => ({ type: 'diary' as const, data: d })),
   ]
   const [pastIdx, setPastIdx] = useState(0)
-  const [shownPastIds, setShownPastIds] = useState<Set<string>>(() =>
+  const [shownPastIds, setShownPastIds] = useState<Set<string | number>>(() =>
     allPast.length > 0 ? new Set([allPast[0].data.id]) : new Set()
   )
   const pastRecord = allPast[pastIdx]
