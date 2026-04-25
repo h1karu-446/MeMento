@@ -270,19 +270,7 @@ export default function DashboardClient({
                   </div>
                 </div>
               </Link>
-            ) : (
-              <button onClick={() => setSelectedWord(pastRecord.data)} className="w-full text-left hover:opacity-80 transition cursor-pointer">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium mb-2 inline-block ${
-                  pastRecord.data.reviews ? genreColor[pastRecord.data.reviews.genre] ?? 'bg-gray-100 text-gray-600'
-                  : pastRecord.data.diaries ? genreColor['日記']
-                  : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {pastRecord.data.reviews?.genre ?? (pastRecord.data.diaries ? '日記' : 'その他')}
-                </span>
-                <p className="text-sm font-semibold text-foreground mb-1">{pastRecord.data.word}</p>
-                <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">{pastRecord.data.description}</p>
-              </button>
-            )
+            ) : null
           ) : (
             <p className="text-sm text-text-secondary">記録がまだありません</p>
           )}

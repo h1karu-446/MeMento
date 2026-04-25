@@ -10,21 +10,17 @@ const ThemeContext = createContext<{
 }>({ theme: 'light', toggle: () => {} })
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
-  const [mounted, setMounted] = useState(false)
 
-  // マウント判定（Hydration対策）
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light'
+    const saved = localStorage.getItem('theme')
+    return saved === 'dark' ? 'dark' : 'light'
+  })
+
+  // theme適用（これはOKなuseEffect）
   useEffect(() => {
-    setMounted(true)
-    const saved = localStorage.getItem('theme') as Theme | null
-    if (saved === 'dark') setTheme('dark')
-  }, [])
-
-  // theme適用
-  useEffect(() => {
-    if (!mounted) return
-
     const root = document.documentElement
+
     if (theme === 'dark') {
       root.classList.add('dark')
     } else {
@@ -32,14 +28,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     localStorage.setItem('theme', theme)
-  }, [theme, mounted])
+  }, [theme])
 
   function toggle() {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
   }
-
-  // マウント前は何も描画しない（ズレ防止）
-  if (!mounted) return null
 
   return (
     <ThemeContext.Provider value={{ theme, toggle }}>
