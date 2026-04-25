@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 import { createWord } from '../actions'
 import { useToast } from '@/components/Toast'
 
@@ -105,9 +105,9 @@ export default function NewWordPage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
           >
-            {saving ? '保存中...' : '保存する'}
+            {saving ? <><Loader2 size={14} className="animate-spin" />保存中...</> : '保存する'}
           </button>
         </div>
 

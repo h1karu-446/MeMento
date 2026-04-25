@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
+import SubmitButton from '@/components/SubmitButton'
 
 type Props = {
   searchParams: Promise<{ error?: string; code?: string; next?: string }>
@@ -88,12 +89,11 @@ export default async function LoginPage({ searchParams }: Props) {
             </div>
 
             <div className="w-4/5 mx-auto">
-              <button
-                type="submit"
+              <SubmitButton
+                label="ログイン"
+                loadingLabel="ログイン中..."
                 className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer"
-              >
-                ログイン
-              </button>
+              />
             </div>
           </form>
         </div>

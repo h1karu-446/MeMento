@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ForgotPasswordPage() {
@@ -60,9 +61,9 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
               >
-                {loading ? '送信中...' : 'リセットリンクを送信'}
+                {loading ? <><Loader2 size={14} className="animate-spin" />送信中...</> : 'リセットリンクを送信'}
               </button>
             </div>
             <p className="text-center text-sm text-text-secondary">

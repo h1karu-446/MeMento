@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2 } from 'lucide-react'
+import { ChevronLeft, Plus, Sparkles, ArrowLeftRight, Undo2, Loader2 } from 'lucide-react'
 import { updateDiary } from '../../actions'
 import { proofreadText } from '@/lib/ai-actions'
 import { useToast } from '@/components/Toast'
@@ -121,9 +121,9 @@ export default function EditDiaryClient({
               <button
                 onClick={handleProofread}
                 disabled={aiLoading}
-                className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
               >
-                {aiLoading ? '添削中...' : '添削する'}
+                {aiLoading ? <><Loader2 size={12} className="animate-spin" />添削中...</> : '添削する'}
               </button>
             </div>
             <p className="text-sm text-foreground bg-surface rounded-lg px-4 py-3 border border-black/5 mb-3 whitespace-pre-line min-h-[3rem]">
@@ -234,9 +234,9 @@ export default function EditDiaryClient({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50"
         >
-          {saving ? '保存中...' : '保存する'}
+          {saving ? <><Loader2 size={14} className="animate-spin" />保存中...</> : '保存する'}
         </button>
       </div>
 

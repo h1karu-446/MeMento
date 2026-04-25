@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signOut } from './actions'
 import { createClient } from '@/lib/supabase/client'
+import { Loader2 } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useToast } from '@/components/Toast'
 
@@ -224,8 +225,8 @@ export default function MypageClient({
                 キャンセル
               </button>
               <button onClick={handleNameChange} disabled={nameSaving}
-                className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50">
-                {nameSaving ? '変更中...' : '変更する'}
+                className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+                {nameSaving ? <><Loader2 size={14} className="animate-spin" />変更中...</> : '変更する'}
               </button>
             </div>
           </div>
@@ -270,8 +271,8 @@ export default function MypageClient({
                 キャンセル
               </button>
               <button onClick={handlePasswordChange} disabled={passwordSaving}
-                className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50">
-                {passwordSaving ? '変更中...' : '変更する'}
+                className="flex-1 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+                {passwordSaving ? <><Loader2 size={14} className="animate-spin" />変更中...</> : '変更する'}
               </button>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles } from 'lucide-react'
+import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles, Loader2 } from 'lucide-react'
 import { deleteWord } from './words/actions'
 import { generateRecommendation, type Recommendation } from '@/lib/ai-actions'
 import { genreColor } from '@/lib/genre-colors'
@@ -300,7 +300,7 @@ export default function DashboardClient({
               disabled={recLoading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
             >
-              <Sparkles size={12} />
+              {recLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
               {recLoading ? '生成中...' : recommendations ? '更新する' : 'おすすめを生成'}
             </button>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/Toast'
 
@@ -64,9 +65,9 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
-              {loading ? '変更中...' : 'パスワードを変更する'}
+              {loading ? <><Loader2 size={14} className="animate-spin" />変更中...</> : 'パスワードを変更する'}
             </button>
           </div>
         </form>
