@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { genreColor } from '@/lib/genre-colors'
 
 type Review = {
   id: string
@@ -10,12 +11,6 @@ type Review = {
   rate: number
   impressions: string
   created_at: string
-}
-
-const genreColor: Record<string, string> = {
-  映画: 'bg-yellow-100 text-yellow-700',
-  小説: 'bg-blue-100 text-blue-700',
-  音楽: 'bg-orange-100 text-orange-700',
 }
 
 const filters = ['すべて', '映画', '小説', '音楽'] as const

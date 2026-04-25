@@ -4,11 +4,20 @@ import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
 
 type Props = {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; code?: string; next?: string }>
 }
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { error } = await searchParams
+  const { error, code, next } = await searchParams
+
+  // パスワードリセットのコードが来たら交換してリセット画面へ
+  if (code) {
+    const supabase = await createClient()
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    if (!exchangeError) {
+      redirect(next ?? '/reset-password')
+    }
+  }
 
   async function login(formData: FormData) {
     'use server'

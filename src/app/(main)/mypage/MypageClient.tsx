@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signOut } from './actions'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/components/ThemeProvider'
 
 type Stats = {
   reviewTotal: number
@@ -33,7 +34,7 @@ export default function MypageClient({
   genres: GenreCount[]
   weekActivity: boolean[]
 }) {
-  const [theme, setTheme] = useState<'ライト' | 'ダーク'>('ライト')
+  const { theme, toggle } = useTheme()
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -94,7 +95,7 @@ export default function MypageClient({
             ))}
           </div>
           <p className="text-xs font-medium text-primary">
-            {stats.streak > 0 ? `${stats.streak}日連続記録中` : 'まだ記録がありません'}
+            {stats.streak > 0 ? `${stats.streak}日連続記録中` : '連続記録がありません'}
           </p>
         </div>
 
@@ -171,12 +172,12 @@ export default function MypageClient({
               <div className="flex items-center justify-between py-3">
                 <span className="text-sm text-foreground">テーマ</span>
                 <div className="flex gap-1 bg-black/5 rounded-lg p-0.5">
-                  {(['ライト', 'ダーク'] as const).map((t) => (
-                    <button key={t} onClick={() => setTheme(t)}
+                  {([['light', 'ライト'], ['dark', 'ダーク']] as const).map(([value, label]) => (
+                    <button key={value} onClick={() => value !== theme && toggle()}
                       className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
-                        theme === t ? 'bg-surface text-foreground shadow-sm' : 'text-text-secondary hover:text-foreground'
+                        theme === value ? 'bg-surface text-foreground shadow-sm' : 'text-text-secondary hover:text-foreground'
                       }`}>
-                      {t}
+                      {label}
                     </button>
                   ))}
                 </div>

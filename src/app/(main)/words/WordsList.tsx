@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { deleteWord } from './actions'
+import { genreColor } from '@/lib/genre-colors'
 
 type Word = {
   id: number
@@ -12,13 +13,6 @@ type Word = {
   source_title: string | null
 }
 
-const genreColor: Record<string, string> = {
-  映画: 'bg-yellow-100 text-yellow-700',
-  小説: 'bg-blue-100 text-blue-700',
-  音楽: 'bg-orange-100 text-orange-700',
-  日記: 'bg-green-100 text-green-700',
-  その他: 'bg-gray-100 text-gray-600',
-}
 
 const filters = ['すべて', '映画', '小説', '音楽', '日記', 'その他'] as const
 

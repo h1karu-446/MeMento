@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DeleteButton from './DeleteButton'
+import { languageColor } from '@/lib/genre-colors'
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
@@ -46,9 +47,9 @@ export default async function DiaryDetailPage({ params }: { params: Promise<{ id
             <span className="text-text-secondary text-xs">サムネイル</span>
           </div>
           <div>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              diary.language === 'ja' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-            }`}>{diary.language === 'ja' ? '日本語' : 'English'}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${languageColor[diary.language] ?? languageColor['ja']}`}>
+              {diary.language === 'ja' ? '日本語' : 'English'}
+            </span>
             <h2 className="text-xl font-bold text-foreground mt-2 mb-1">{diary.title}</h2>
             <p className="text-xs text-text-secondary">{formatDate(diary.created_at)}</p>
           </div>

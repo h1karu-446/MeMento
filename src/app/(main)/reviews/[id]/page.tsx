@@ -3,12 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DeleteButton from './DeleteButton'
-
-const genreColor: Record<string, string> = {
-  映画: 'bg-yellow-100 text-yellow-700',
-  小説: 'bg-blue-100 text-blue-700',
-  音楽: 'bg-orange-100 text-orange-700',
-}
+import { genreColor } from '@/lib/genre-colors'
 
 function renderStars(rate: number) {
   const full = Math.floor(rate)
