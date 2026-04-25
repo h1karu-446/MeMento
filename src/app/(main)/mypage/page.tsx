@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import MypageClient from './MypageClient'
+import { genreBarColor } from '@/lib/genre-colors'
 
 export default async function MyPage() {
   const supabase = await createClient()
@@ -35,10 +36,10 @@ export default async function MyPage() {
   reviews?.forEach((r) => { if (r.genre in genreMap) genreMap[r.genre]++ })
 
   const genres = [
-    { label: '映画', count: genreMap['映画'], color: 'bg-yellow-400' },
-    { label: '小説', count: genreMap['小説'], color: 'bg-blue-400' },
-    { label: '音楽', count: genreMap['音楽'], color: 'bg-orange-400' },
-    { label: '日記', count: diaryCount ?? 0,  color: 'bg-green-400' },
+    { label: '映画', count: genreMap['映画'], color: genreBarColor['映画'] },
+    { label: '小説', count: genreMap['小説'], color: genreBarColor['小説'] },
+    { label: '音楽', count: genreMap['音楽'], color: genreBarColor['音楽'] },
+    { label: '日記', count: diaryCount ?? 0,  color: 'bg-green-400 dark:bg-green-600' },
   ]
 
   // 今週の記録・連続日数（ダッシュボードと同じ計算）

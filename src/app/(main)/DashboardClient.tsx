@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles } from 'lucide-react'
 import { deleteWord } from './words/actions'
 import { generateRecommendation, type Recommendation } from '@/lib/ai-actions'
+import { genreColor } from '@/lib/genre-colors'
 
 type Word = {
   id: number
@@ -37,19 +38,8 @@ type PastRecord =
   | { type: 'diary'; data: Diary }
   | { type: 'word'; data: Word & { created_at: string } }
 
-const recGenreColor: Record<string, string> = {
-  映画: 'bg-yellow-100 text-yellow-700',
-  小説: 'bg-blue-100 text-blue-700',
-  音楽: 'bg-orange-100 text-orange-700',
-}
-
-const genreColor: Record<string, string> = {
-  映画: 'bg-yellow-100 text-yellow-700',
-  小説: 'bg-blue-100 text-blue-700',
-  音楽: 'bg-orange-100 text-orange-700',
-  日記: 'bg-green-100 text-green-700',
-  その他: 'bg-gray-100 text-gray-600',
-}
+// recGenreColor は genreColor と同じなので共通化
+const recGenreColor = genreColor
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
@@ -236,7 +226,7 @@ export default function DashboardClient({
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     pastRecord.type === 'review'
                       ? (genreColor[pastRecord.data.genre] ?? 'bg-gray-100 text-gray-600')
-                      : 'bg-green-100 text-green-700'
+                      : genreColor['日記']
                   }`}>
                     {pastRecord.type === 'review' ? pastRecord.data.genre : '日記'}
                   </span>
@@ -284,7 +274,7 @@ export default function DashboardClient({
               <button onClick={() => setSelectedWord(pastRecord.data)} className="w-full text-left hover:opacity-80 transition cursor-pointer">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium mb-2 inline-block ${
                   pastRecord.data.reviews ? genreColor[pastRecord.data.reviews.genre] ?? 'bg-gray-100 text-gray-600'
-                  : pastRecord.data.diaries ? 'bg-green-100 text-green-700'
+                  : pastRecord.data.diaries ? genreColor['日記']
                   : 'bg-gray-100 text-gray-600'
                 }`}>
                   {pastRecord.data.reviews?.genre ?? (pastRecord.data.diaries ? '日記' : 'その他')}

@@ -18,7 +18,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const [open, setOpen] = useState(true)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
-
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {

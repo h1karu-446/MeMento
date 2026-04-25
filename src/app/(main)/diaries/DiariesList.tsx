@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { languageColor } from '@/lib/genre-colors'
 
 type Diary = {
   id: string
@@ -87,9 +88,9 @@ export default function DiariesList({ diaries }: { diaries: Diary[] }) {
                     <p className="text-base font-semibold text-foreground mb-1">{diary.title}</p>
                     <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed">{diary.body}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        diary.language === 'ja' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                      }`}>{diary.language === 'ja' ? '日本語' : 'English'}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${languageColor[diary.language] ?? languageColor['ja']}`}>
+                        {diary.language === 'ja' ? '日本語' : 'English'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
