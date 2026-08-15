@@ -9,13 +9,14 @@ type Word = {
   id: number
   word: string
   description: string
+  example: string | null
   created_at: string
   genre: string | null
   source_title: string | null
 }
 
 
-const filters = ['すべて', '映画', '小説', '音楽', '日記', 'その他'] as const
+const filters = ['すべて', '映画', '小説', '音楽', '日記', '英語学習', 'その他'] as const
 
 const SET_SIZE = 10
 
@@ -252,6 +253,9 @@ export default function WordsList({ words }: { words: Word[] }) {
                 <>
                   <div className="bg-surface rounded-2xl border border-black/5 px-8 py-5 text-center mb-6 max-h-48 overflow-y-auto">
                     <p className="text-sm text-foreground whitespace-pre-line">{currentWord.description}</p>
+                    {currentWord.example && (
+                      <p className="text-xs text-text-secondary italic whitespace-pre-line mt-3">{currentWord.example}</p>
+                    )}
                   </div>
                   <div className="flex justify-center gap-4">
                     <button onClick={() => handleAnswer(true)}
@@ -281,6 +285,9 @@ export default function WordsList({ words }: { words: Word[] }) {
             <p className="text-3xl font-bold text-foreground px-8 pb-3 flex-shrink-0">{selectedWord.word}</p>
             <div className="overflow-y-auto px-8 flex-1">
               <p className="text-sm text-foreground leading-relaxed whitespace-pre-line pb-4">{selectedWord.description}</p>
+              {selectedWord.example && (
+                <p className="text-sm text-text-secondary italic leading-relaxed whitespace-pre-line pb-4">{selectedWord.example}</p>
+              )}
             </div>
             <div className="border-t border-black/5 px-8 py-4 flex items-center justify-between flex-shrink-0">
               <p className="text-xs text-text-secondary">「{getSourceTitle(selectedWord)}」から</p>

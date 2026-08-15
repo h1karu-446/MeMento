@@ -7,7 +7,7 @@ export default async function WordsPage() {
 
   const { data: words, error } = await supabase
     .from('words')
-    .select('id, word, description, genre, source_title, created_at')
+    .select('id, word, description, example, genre, source_title, created_at')
     .order('created_at', { ascending: false })
 
   if (error) console.error(error)

@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, LayoutDashboard, Star, BookOpen, CaseSensitive } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LayoutDashboard, Star, BookOpen, CaseSensitive, GraduationCap } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { label: 'ダッシュボード', href: '/',        icon: LayoutDashboard },
   { label: 'レビュー',       href: '/reviews',  icon: Star },
   { label: 'ダイアリー',     href: '/diaries',  icon: BookOpen },
+  { label: '英語学習',       href: '/english',  icon: GraduationCap },
   { label: 'ワード',         href: '/words',    icon: CaseSensitive },
 ]
 

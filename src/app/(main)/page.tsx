@@ -9,7 +9,7 @@ export default async function DashboardPage() {
   // 今日のワード用
   const { data: words } = await supabase
     .from('words')
-    .select('id, word, description, genre, source_title, created_at')
+    .select('id, word, description, example, genre, source_title, created_at')
     .order('created_at', { ascending: false })
     .limit(50)
 

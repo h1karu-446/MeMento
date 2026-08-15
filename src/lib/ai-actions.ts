@@ -127,6 +127,50 @@ export async function translateTextClaude(
   }
 }
 
+export async function checkEnglishText(
+  text: string,
+): Promise<
+  | { ok: true; corrected: string; hasErrors: boolean; translation: string }
+  | { ok: false; error: string }
+> {
+  const system = `あなたは日本人の英語学習者向けの英文チェッカーです。
+ユーザーが書いた英語の例文について、以下を行ってください。
+
+1. 文法・スペル・不自然な単語選びの誤りをチェックする
+2. 誤りがあれば自然な英語に修正する。誤りがなければ元の文をそのまま返す
+3. 修正後の文を自然な日本語に翻訳する
+
+必ず以下のJSON形式だけを返してください。説明・前置き・コードブロック（\`\`\`）は不要です。
+{"hasErrors": true または false, "corrected": "修正後の英文（誤りがなければ元の文と同じ）", "translation": "日本語訳"}`
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system,
+      messages: [{ role: 'user', content: text }],
+    })
+    const block = response.content[0]
+    if (block.type !== 'text') return { ok: false, error: '予期しないレスポンス形式です' }
+
+    const cleaned = block.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+
+    let parsed: { hasErrors: boolean; corrected: string; translation: string }
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch {
+      console.error('[checkEnglishText] JSONパース失敗:', cleaned)
+      return { ok: false, error: 'AIの返答を解析できませんでした。もう一度試してください。' }
+    }
+
+    return { ok: true, corrected: parsed.corrected, hasErrors: parsed.hasErrors, translation: parsed.translation }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.error('[checkEnglishText]', message)
+    return { ok: false, error: message }
+  }
+}
+
 export async function translateTextAzure(
   text: string,
   from: 'ja' | 'en',

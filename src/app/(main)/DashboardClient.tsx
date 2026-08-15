@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { RefreshCw, Star, BookOpen, CaseSensitive, Sparkles, Loader2 } from 'lucide-react'
+import { RefreshCw, Star, BookOpen, CaseSensitive, GraduationCap, Sparkles, Loader2 } from 'lucide-react'
 import { deleteWord } from './words/actions'
 import { generateRecommendation, type Recommendation } from '@/lib/ai-actions'
 import { genreColor } from '@/lib/genre-colors'
@@ -13,6 +13,7 @@ type Word = {
   id: number
   word: string
   description: string
+  example: string | null
   genre: string | null
   source_title: string | null
   created_at: string
@@ -163,6 +164,9 @@ export default function DashboardClient({
           </Link>
           <Link href="/diaries/new" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition">
             <div className="flex gap-x-1">日記をつける<BookOpen size={20} /></div>
+          </Link>
+          <Link href="/english/new" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition">
+            <div className="flex gap-x-1">英語学習を記録する<GraduationCap size={20} /></div>
           </Link>
           <Link href="/words/new" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition">
             <div className="flex gap-x-1">ワードを記録する<CaseSensitive size={20} /></div>
@@ -344,6 +348,9 @@ export default function DashboardClient({
             <p className="text-3xl font-bold text-foreground px-8 pb-3 flex-shrink-0">{selectedWord.word}</p>
             <div className="overflow-y-auto px-8 flex-1">
               <p className="text-sm text-foreground leading-relaxed whitespace-pre-line pb-4">{selectedWord.description}</p>
+              {selectedWord.example && (
+                <p className="text-sm text-text-secondary italic leading-relaxed whitespace-pre-line pb-4">{selectedWord.example}</p>
+              )}
             </div>
             <div className="border-t border-black/5 px-8 py-4 flex items-center justify-between flex-shrink-0">
               <p className="text-xs text-text-secondary">「{selectedWord.source_title ?? ''}」から</p>

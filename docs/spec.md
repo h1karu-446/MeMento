@@ -36,7 +36,8 @@
 |------|------|
 | **レビュー** | 映画・小説・音楽に対する感想・評価の記録 |
 | **ダイアリー** | 日々の出来事や思考を記録した日記 |
-| **ワード** | レビュー・ダイアリー内で記録した語彙・表現・豆知識 |
+| **英語学習ログ** | 日々の英語学習で学んだ内容を記録したログ |
+| **ワード** | レビュー・ダイアリー・英語学習ログ内で記録した語彙・表現・豆知識 |
 | **ジャンル** | コンテンツの種別（映画・小説・音楽） |
 | **レート** | コンテンツへの5段階評価 |
 
@@ -84,6 +85,9 @@
 | ダイアリー一覧 | `/diaries` | 日記の一覧表示 |
 | ダイアリー詳細 | `/diaries/[id]` | 日記の詳細表示 |
 | ダイアリー作成 | `/diaries/new` | 新規日記の作成 |
+| 英語学習ログ一覧 | `/english` | 英語学習ログの一覧表示 |
+| 英語学習ログ詳細 | `/english/[id]` | 英語学習ログの詳細表示 |
+| 英語学習ログ作成 | `/english/new` | 新規英語学習ログの作成 |
 | ワード一覧 | `/words` | 記録した語彙・言い回しの一覧 |
 | マイページ | `/mypage` | プロフィール・設定 |
 
@@ -99,9 +103,11 @@ Figmaで作成したワイヤーフレームは以下のリンクから確認で
 erDiagram
   users ||--o{ reviews : "has"
   users ||--o{ diaries : "has"
+  users ||--o{ english_logs : "has"
   users ||--o{ words : "has"
   reviews ||--o{ words : "linked to"
   diaries ||--o{ words : "linked to"
+  english_logs ||--o{ words : "linked to"
  
   users {
     uuid id PK
@@ -125,11 +131,19 @@ erDiagram
     text language
     timestamp created_at
   }
+  english_logs {
+    uuid id PK
+    uuid user_id FK
+    text title
+    text content
+    timestamp created_at
+  }
   words {
     uuid id PK
     uuid user_id FK
     uuid review_id FK
     uuid diary_id FK
+    uuid english_log_id FK
     text word
     text description
     timestamp created_at
@@ -164,6 +178,15 @@ erDiagram
 | language | text | 言語（ja / en） |
 | created_at | timestamp | 作成日時 |
 
+### english_logsテーブル
+| カラム名 | 型 | 説明 |
+|----------|----|------|
+| id | uuid | 主キー |
+| user_id | uuid | 外部キー（users.id） |
+| title | text | タイトル |
+| content | text | 学んだ内容のメモ |
+| created_at | timestamp | 作成日時 |
+
 ### wordsテーブル
 | カラム名 | 型 | 説明 |
 |----------|----|------|
@@ -171,6 +194,7 @@ erDiagram
 | user_id | uuid | 外部キー（users.id） |
 | review_id | uuid | 外部キー（reviews.id）nullable |
 | diary_id | uuid | 外部キー（diaries.id）nullable |
+| english_log_id | uuid | 外部キー（english_logs.id）nullable |
 | word | text | 語彙・言い回し |
 | description | text | 意味・説明 |
 | created_at | timestamp | 作成日時 |
