@@ -36,6 +36,25 @@ export default async function LoginPage({ searchParams }: Props) {
     redirect('/')
   }
 
+  async function loginAsDemo() {
+    'use server'
+
+    const email = process.env.DEMO_USER_EMAIL
+    const password = process.env.DEMO_USER_PASSWORD
+    if (!email || !password) {
+      redirect('/login?error=demo_unavailable')
+    }
+
+    const supabase = await createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      redirect('/login?error=demo_unavailable')
+    }
+
+    redirect('/')
+  }
+
   return (
     <div className="min-h-screen flex mt-15 justify-center bg-background px-4">
       <div className="w-full max-w-sm">
@@ -54,6 +73,12 @@ export default async function LoginPage({ searchParams }: Props) {
           {error === 'invalid_credentials' && (
             <div className="w-4/5 mx-auto mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
               メールアドレスまたはパスワードが正しくありません
+            </div>
+          )}
+
+          {error === 'demo_unavailable' && (
+            <div className="w-4/5 mx-auto mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+              現在デモアカウントを利用できません
             </div>
           )}
 
@@ -95,6 +120,15 @@ export default async function LoginPage({ searchParams }: Props) {
                 className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-sm transition cursor-pointer"
               />
             </div>
+          </form>
+
+          {/* デモログイン */}
+          <form action={loginAsDemo} className="w-4/5 mx-auto mt-3">
+            <SubmitButton
+              label="デモで見る"
+              loadingLabel="デモにログイン中..."
+              className="w-full py-2.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/5 font-medium text-sm transition cursor-pointer"
+            />
           </form>
         </div>
         {/* 区切り線 */}
