@@ -6,11 +6,14 @@ export default async function EditEnglishLogPage({ params }: { params: Promise<{
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: log } = await supabase.from('english_logs').select('*').eq('id', id).single()
+  const [{ data: log, error: recordError }, { data: words, error: wordsError }] = await Promise.all([
+    supabase.from('english_logs').select('*').eq('id', id).single(),
+    supabase
+    .from('words').select('word, description, example').eq('english_log_id', id).order('created_at', { ascending: true }),
+  ])
+  if (recordError && recordError.code !== 'PGRST116') throw new Error('記録の取得に失敗しました', { cause: recordError })
   if (!log) notFound()
-
-  const { data: words } = await supabase
-    .from('words').select('word, description, example').eq('english_log_id', id).order('created_at', { ascending: true })
+  if (wordsError) throw new Error('ワードの取得に失敗しました', { cause: wordsError })
 
   return (
     <EditEnglishLogClient

@@ -35,3 +35,22 @@ export async function deleteWord(wordId: number) {
   const { error } = await supabase.from('words').delete().eq('id', wordId).eq('user_id', user.id)
   if (error) throw new Error(error.message)
 }
+
+// Load the full filtered vocabulary only when a quiz starts, in bounded batches.
+export async function loadQuizWords(params: { q: string; filter: string }) {
+  const { filteredQuery, parseListState } = await import('@/lib/lists/query')
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.getClaims()
+  if (error || !data?.claims.sub) redirect('/login')
+  const state = parseListState('words', params)
+  const words = []
+  const batchSize = 500
+  for (let offset = 0; ; offset += batchSize) {
+    const { data: batch, error: queryError } = await filteredQuery(supabase, 'words', state, false).range(offset, offset + batchSize - 1)
+    if (queryError?.code === 'PGRST103' && offset > 0) break
+    if (queryError) throw new Error('テスト用ワードの取得に失敗しました')
+    words.push(...(batch ?? []))
+    if (!batch || batch.length < batchSize) break
+  }
+  return words
+}

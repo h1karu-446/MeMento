@@ -6,11 +6,14 @@ export default async function EditDiaryPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: diary } = await supabase.from('diaries').select('*').eq('id', id).single()
+  const [{ data: diary, error: recordError }, { data: words, error: wordsError }] = await Promise.all([
+    supabase.from('diaries').select('*').eq('id', id).single(),
+    supabase
+    .from('words').select('word, description').eq('diary_id', id).order('created_at', { ascending: true }),
+  ])
+  if (recordError && recordError.code !== 'PGRST116') throw new Error('記録の取得に失敗しました', { cause: recordError })
   if (!diary) notFound()
-
-  const { data: words } = await supabase
-    .from('words').select('word, description').eq('diary_id', id).order('created_at', { ascending: true })
+  if (wordsError) throw new Error('ワードの取得に失敗しました', { cause: wordsError })
 
   return (
     <EditDiaryClient

@@ -1,16 +1,12 @@
 import Link from 'next/link'
+import { loadList, type SearchParams } from '@/lib/lists/query'
 import { createClient } from '@/lib/supabase/server'
 import WordsList from './WordsList'
 
-export default async function WordsPage() {
+export default async function WordsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const supabase = await createClient()
 
-  const { data: words, error } = await supabase
-    .from('words')
-    .select('id, word, description, example, genre, source_title, created_at')
-    .order('created_at', { ascending: false })
-
-  if (error) console.error(error)
+  const { rows, state } = await loadList(supabase, 'words', await searchParams)
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -20,7 +16,7 @@ export default async function WordsPage() {
           + ワードを追加
         </Link>
       </div>
-      <WordsList words={words ?? []} />
+      <WordsList words={rows as unknown as Parameters<typeof WordsList>[0]['words']} state={state} />
     </div>
   )
 }

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "hello": "echo Hello World"
+    "hello": "echo Hello World",
+    "test": "node --test tests/*.test.mjs",
+    "benchmark": "node scripts/benchmark-pages.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

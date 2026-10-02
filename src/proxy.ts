@@ -30,8 +30,8 @@ export async function proxy(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data, error,
+  } = await supabase.auth.getClaims()
 
   const { pathname } = request.nextUrl
   const isPublic =
@@ -41,10 +41,12 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth')
 
-  if (!user && !isPublic) {
+  if ((error || !data?.claims.sub) && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => response.cookies.set(cookie))
+    return response
   }
 
   return supabaseResponse

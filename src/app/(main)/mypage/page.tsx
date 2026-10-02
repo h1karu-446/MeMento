@@ -11,48 +11,30 @@ export default async function MyPage() {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  // 統計（総数・今月数）
-  const [
-    { count: reviewTotal },
-    { count: reviewMonth },
-    { count: diaryTotal },
-    { count: diaryMonth },
-    { count: wordTotal },
-    { count: wordMonth },
-  ] = await Promise.all([
-    supabase.from('reviews').select('*', { count: 'exact', head: true }),
-    supabase.from('reviews').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
-    supabase.from('diaries').select('*', { count: 'exact', head: true }),
-    supabase.from('diaries').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
-    supabase.from('words').select('*', { count: 'exact', head: true }),
-    supabase.from('words').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
-  ])
-
-  // ジャンル内訳
-  const { data: reviews } = await supabase.from('reviews').select('genre')
-  const { count: diaryCount } = await supabase.from('diaries').select('*', { count: 'exact', head: true })
-
-  const genreMap: Record<string, number> = { 映画: 0, 小説: 0, 音楽: 0 }
-  reviews?.forEach((r) => { if (r.genre in genreMap) genreMap[r.genre]++ })
-
-  const genres = [
-    { label: '映画', count: genreMap['映画'], color: genreBarColor['映画'] },
-    { label: '小説', count: genreMap['小説'], color: genreBarColor['小説'] },
-    { label: '音楽', count: genreMap['音楽'], color: genreBarColor['音楽'] },
-    { label: '日記', count: diaryCount ?? 0,  color: 'bg-green-400 dark:bg-green-600' },
-  ]
-
-  // 今週の記録・連続日数（ダッシュボードと同じ計算）
   const dow = now.getDay()
-  const mondayOffset = dow === 0 ? -6 : 1 - dow
   const weekStart = new Date(now)
-  weekStart.setDate(now.getDate() + mondayOffset)
+  weekStart.setDate(now.getDate() + (dow === 0 ? -6 : 1 - dow))
   weekStart.setHours(0, 0, 0, 0)
 
-  const [{ data: weekReviews }, { data: weekDiaries }] = await Promise.all([
-    supabase.from('reviews').select('created_at').gte('created_at', weekStart.toISOString()),
-    supabase.from('diaries').select('created_at').gte('created_at', weekStart.toISOString()),
-  ])
+  const { data: stats, error: statsError } = await supabase.rpc('get_mypage_stats', {
+    month_start: monthStart,
+    week_start: weekStart.toISOString(),
+  })
+  if (statsError || !stats) throw new Error('統計の取得に失敗しました', { cause: statsError })
+  const {
+    reviewTotal, reviewMonth, diaryTotal, diaryMonth, wordTotal, wordMonth,
+    movies, novels, music, weekReviews, weekDiaries,
+  } = stats as {
+    reviewTotal: number; reviewMonth: number; diaryTotal: number; diaryMonth: number
+    wordTotal: number; wordMonth: number; movies: number; novels: number; music: number
+    weekReviews: { created_at: string }[]; weekDiaries: { created_at: string }[]
+  }
+  const genres = [
+    { label: '映画', count: movies ?? 0, color: genreBarColor['映画'] },
+    { label: '小説', count: novels ?? 0, color: genreBarColor['小説'] },
+    { label: '音楽', count: music ?? 0, color: genreBarColor['音楽'] },
+    { label: '日記', count: diaryTotal ?? 0, color: 'bg-green-400 dark:bg-green-600' },
+  ]
 
   const recordedDays = new Set<number>()
   ;[...(weekReviews ?? []), ...(weekDiaries ?? [])].forEach((r) => {
@@ -72,12 +54,14 @@ export default async function MyPage() {
   const email = user.email ?? ''
   const displayName = user.user_metadata?.full_name ?? email.split('@')[0]
   const initials = displayName.slice(0, 2).toUpperCase()
+  const isDemo = !!process.env.DEMO_USER_EMAIL && email === process.env.DEMO_USER_EMAIL
 
   return (
     <MypageClient
       email={email}
       displayName={displayName}
       initials={initials}
+      isDemo={isDemo}
       stats={{
         reviewTotal: reviewTotal ?? 0,
         reviewMonth: reviewMonth ?? 0,

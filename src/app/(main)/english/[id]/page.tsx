@@ -9,11 +9,14 @@ export default async function EnglishLogDetailPage({ params }: { params: Promise
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: log } = await supabase.from('english_logs').select('*').eq('id', id).single()
+  const [{ data: log, error: recordError }, { data: words, error: wordsError }] = await Promise.all([
+    supabase.from('english_logs').select('*').eq('id', id).single(),
+    supabase
+    .from('words').select('*').eq('english_log_id', id).order('created_at', { ascending: false }),
+  ])
+  if (recordError && recordError.code !== 'PGRST116') throw new Error('記録の取得に失敗しました', { cause: recordError })
   if (!log) notFound()
-
-  const { data: words } = await supabase
-    .from('words').select('*').eq('english_log_id', id).order('created_at', { ascending: false })
+  if (wordsError) throw new Error('ワードの取得に失敗しました', { cause: wordsError })
 
   return (
     <div className="p-4 md:p-8 w-full">

@@ -26,20 +26,21 @@ export default async function ReviewDetailPage({ params }: { params: Promise<{ i
   const supabase = await createClient()
 
   // レビューを取得
-  const { data: review } = await supabase
+  const [{ data: review, error: recordError }, { data: words, error: wordsError }] = await Promise.all([
+    supabase
     .from('reviews')
     .select('*')
     .eq('id', id)
-    .single()
-
-  if (!review) notFound()
-
-  // このレビューに紐づくワードを取得
-  const { data: words } = await supabase
+    .single(),
+    supabase
     .from('words')
     .select('*')
     .eq('review_id', id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }),
+  ])
+  if (recordError && recordError.code !== 'PGRST116') throw new Error('記録の取得に失敗しました', { cause: recordError })
+  if (!review) notFound()
+  if (wordsError) throw new Error('ワードの取得に失敗しました', { cause: wordsError })
 
   return (
     <div className="p-4 md:p-8 w-full">

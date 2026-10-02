@@ -1,17 +1,12 @@
 import Link from 'next/link'
+import { loadList, type SearchParams } from '@/lib/lists/query'
 import { createClient } from '@/lib/supabase/server'
 import ReviewsList from './ReviewsList'
 
-export default async function ReviewsPage() {
+export default async function ReviewsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const supabase = await createClient()
 
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select('*')
-    .order('created_at', { ascending: false })
-  if (error) {
-    console.error(error)
-  }
+  const { rows, state } = await loadList(supabase, 'reviews', await searchParams)
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -28,7 +23,7 @@ export default async function ReviewsPage() {
       </div>
 
       {/* 一覧（フィルター・ソート付き） */}
-      <ReviewsList reviews={reviews ?? []} />
+      <ReviewsList reviews={rows as unknown as Parameters<typeof ReviewsList>[0]['reviews']} state={state} />
 
     </div>
   )
