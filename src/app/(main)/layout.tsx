@@ -21,12 +21,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const [userEmail, setUserEmail] = useState('')
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data.user
-      if (!user) return
-      setUserEmail(user.email ?? '')
-      setUserName(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? '')
+    // Session data is only used for the sidebar label, never for authorization.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user
+      setUserEmail(user?.email ?? '')
+      setUserName(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? '')
     })
+    return () => subscription.unsubscribe()
   }, [])
 
   return (

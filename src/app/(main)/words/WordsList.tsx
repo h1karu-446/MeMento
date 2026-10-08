@@ -1,7 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { deleteWord } from './actions'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
+import { useListNavigation } from '@/components/useListNavigation'
+import { ListPagination } from '@/components/ListPagination'
+import type { ListState } from '@/lib/lists/query'
+import { deleteWord, loadQuizWords } from './actions'
 import { genreColor } from '@/lib/genre-colors'
 import { formatDate } from '@/lib/utils'
 
@@ -32,13 +37,13 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-const PAGE_SIZE = 15
 
-export default function WordsList({ words }: { words: Word[] }) {
-  const [activeFilter, setActiveFilter] = useState<typeof filters[number]>('すべて')
-  const [searchQuery, setSearchQuery] = useState('')
+export default function WordsList({ words, state }: { words: Word[]; state: ListState }) {
+  const { searchQuery, setSearchQuery, activeFilter, setActiveFilter, page, totalPages, setPage, isPending } = useListNavigation(state)
+  const router = useRouter()
+  const toast = useToast()
+  const [quizLoading, setQuizLoading] = useState(false)
   const [selectedWord, setSelectedWord] = useState<Word | null>(null)
-  const [page, setPage] = useState(1)
   const [mode, setMode] = useState<'list' | 'test'>('list')
 
   // テストモード
@@ -52,16 +57,9 @@ export default function WordsList({ words }: { words: Word[] }) {
   const [wrongWords, setWrongWords] = useState<Word[]>([])
   const [finished, setFinished] = useState(false)
 
-  const q = searchQuery.toLowerCase()
-  const filteredWords = useMemo(() =>
-    words
-      .filter((w) => activeFilter === 'すべて' || getGenre(w) === activeFilter)
-      .filter((w) => !q || w.word.toLowerCase().includes(q) || w.description.toLowerCase().includes(q))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [words, activeFilter, q]
-  )
-  const totalPages = Math.max(1, Math.ceil(filteredWords.length / PAGE_SIZE))
-  const pagedWords = filteredWords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const q = state.q
+  const filteredWords = words
+  const pagedWords = words
   const currentWord = testWords[questionIndex]
   const totalSets = Math.ceil(shuffledAll.length / SET_SIZE)
   const hasNextSet = (setIndex + 1) < totalSets
@@ -79,10 +77,17 @@ export default function WordsList({ words }: { words: Word[] }) {
     setMode('test')
   }
 
-  function startTest() {
-    const all = shuffle(filteredWords)
-    const first = all.slice(0, SET_SIZE)
-    beginSet(all, 0, first)
+  async function startTest() {
+    setQuizLoading(true)
+    try {
+      const all = shuffle(await loadQuizWords({ q: state.q, filter: state.filter }) as unknown as Word[])
+      if (!all.length) { toast('出題できるワードがありません', 'info'); return }
+      beginSet(all, 0, all.slice(0, SET_SIZE))
+    } catch {
+      toast('テスト用ワードの取得に失敗しました')
+    } finally {
+      setQuizLoading(false)
+    }
   }
 
   function handleAnswer(isCorrect: boolean) {
@@ -114,7 +119,7 @@ export default function WordsList({ words }: { words: Word[] }) {
   }
 
   return (
-    <>
+    <div aria-busy={isPending || quizLoading}>
       {/* 検索・フィルター（テスト中は非表示） */}
       {mode === 'list' && (
         <div className="flex items-center gap-3 mb-6">
@@ -122,13 +127,14 @@ export default function WordsList({ words }: { words: Word[] }) {
             type="text"
             placeholder="語彙・意味で検索..."
             value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+          maxLength={200}
+            onChange={(e) => { setSearchQuery(e.target.value) }}
             className="w-40 sm:w-56 px-4 py-2 rounded-lg border border-black/10 bg-surface text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <div className="flex items-center gap-3 ml-auto">
             <div className="flex gap-2">
               {filters.map((f) => (
-                <button key={f} onClick={() => { setActiveFilter(f); setPage(1) }}
+                <button key={f} onClick={() => { setActiveFilter(f) }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                     activeFilter === f ? 'bg-primary text-white' : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
                   }`}>{f}</button>
@@ -136,10 +142,10 @@ export default function WordsList({ words }: { words: Word[] }) {
             </div>
             <button
               onClick={startTest}
-              disabled={filteredWords.length === 0}
+              disabled={filteredWords.length === 0 || quizLoading || isPending || searchQuery !== state.q}
               className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-medium transition cursor-pointer disabled:opacity-40"
             >
-              テスト開始
+              {quizLoading ? '読み込み中…' : 'テスト開始'}
             </button>
           </div>
         </div>
@@ -168,20 +174,7 @@ export default function WordsList({ words }: { words: Word[] }) {
               })}
             </div>
           )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 mt-6">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className={`w-9 h-9 rounded-lg text-sm font-medium transition cursor-pointer bg-surface border border-black/10 text-foreground ${page === 1 ? 'opacity-30 cursor-default' : 'hover:bg-black/5'}`}>«</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setPage(p)}
-                  className={`w-9 h-9 rounded-lg text-sm font-medium transition cursor-pointer ${
-                    page === p ? 'bg-primary text-white' : 'bg-surface border border-black/10 text-foreground hover:bg-black/5'
-                  }`}>{p}</button>
-              ))}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className={`w-9 h-9 rounded-lg text-sm font-medium transition cursor-pointer bg-surface border border-black/10 text-foreground ${page === totalPages ? 'opacity-30 cursor-default' : 'hover:bg-black/5'}`}>»</button>
-            </div>
-          )}
+          <ListPagination page={page} totalPages={totalPages} setPage={setPage} />
         </>
       )}
 
@@ -294,13 +287,13 @@ export default function WordsList({ words }: { words: Word[] }) {
               <div className="flex items-center gap-3">
                 <p className="text-xs text-text-secondary">{formatDate(selectedWord.created_at)}</p>
                 <button
-                  onClick={async () => { if (!confirm('削除しますか？')) return; await deleteWord(selectedWord.id); setSelectedWord(null); location.reload() }}
+                  onClick={async () => { if (!confirm('削除しますか？')) return; await deleteWord(selectedWord.id); setSelectedWord(null); router.refresh() }}
                   className="text-xs text-red-400 hover:text-red-600 transition cursor-pointer">削除</button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

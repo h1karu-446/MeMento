@@ -1,15 +1,11 @@
 import Link from 'next/link'
+import { loadList, type SearchParams } from '@/lib/lists/query'
 import { createClient } from '@/lib/supabase/server'
 import DiariesList from './DiariesList'
 
-export default async function DiariesPage() {
+export default async function DiariesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const supabase = await createClient()
-  const { data: diaries, error } = await supabase
-    .from('diaries')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) console.error(error)
+  const { rows, state } = await loadList(supabase, 'diaries', await searchParams)
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -19,7 +15,7 @@ export default async function DiariesPage() {
           + 新しい日記
         </Link>
       </div>
-      <DiariesList diaries={diaries ?? []} />
+      <DiariesList diaries={rows as unknown as Parameters<typeof DiariesList>[0]['diaries']} state={state} />
     </div>
   )
 }

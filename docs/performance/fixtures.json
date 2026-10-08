@@ -1,0 +1,95 @@
+{
+  "conditions": "1205 records per table, synthetic 50 ms/request, 1 warmup + 3 samples, source functions (not browser)",
+  "results": [
+    {
+      "route": "page.tsx",
+      "before": {
+        "medianMs": 363,
+        "returnedRows": 118,
+        "payloadBytes": 283713,
+        "maxParallel": 1
+      },
+      "after": {
+        "medianMs": 52,
+        "returnedRows": 118,
+        "payloadBytes": 283713,
+        "maxParallel": 6
+      }
+    },
+    {
+      "route": "mypage/page.tsx",
+      "before": {
+        "medianMs": 263,
+        "returnedRows": 1008,
+        "payloadBytes": 593,
+        "maxParallel": 6
+      },
+      "after": {
+        "medianMs": 104,
+        "returnedRows": 0,
+        "payloadBytes": 590,
+        "maxParallel": 1
+      }
+    },
+    {
+      "route": "reviews/[id]/page.tsx",
+      "before": {
+        "medianMs": 106,
+        "returnedRows": 1,
+        "payloadBytes": 5813,
+        "maxParallel": 1
+      },
+      "after": {
+        "medianMs": 52,
+        "returnedRows": 1,
+        "payloadBytes": 5813,
+        "maxParallel": 2
+      }
+    },
+    {
+      "route": "reviews/page.tsx",
+      "before": {
+        "medianMs": 52,
+        "returnedRows": 1000,
+        "payloadBytes": 12755192,
+        "maxParallel": 1
+      },
+      "after": {
+        "medianMs": 53,
+        "returnedRows": 9,
+        "payloadBytes": 3741,
+        "maxParallel": 1
+      }
+    },
+    {
+      "route": "diaries/page.tsx",
+      "before": {
+        "medianMs": 52,
+        "returnedRows": 1000,
+        "payloadBytes": 12755189,
+        "maxParallel": 1
+      },
+      "after": {
+        "medianMs": 52,
+        "returnedRows": 4,
+        "payloadBytes": 3848,
+        "maxParallel": 1
+      }
+    },
+    {
+      "route": "words/page.tsx",
+      "before": {
+        "medianMs": 53,
+        "returnedRows": 1000,
+        "payloadBytes": 148281,
+        "maxParallel": 1
+      },
+      "after": {
+        "medianMs": 53,
+        "returnedRows": 15,
+        "payloadBytes": 2755,
+        "maxParallel": 1
+      }
+    }
+  ]
+}

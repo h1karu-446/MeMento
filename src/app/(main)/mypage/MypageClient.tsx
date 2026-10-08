@@ -28,6 +28,7 @@ export default function MypageClient({
   stats,
   genres,
   weekActivity,
+  isDemo,
 }: {
   email: string
   displayName: string
@@ -35,6 +36,7 @@ export default function MypageClient({
   stats: Stats
   genres: GenreCount[]
   weekActivity: boolean[]
+  isDemo: boolean
 }) {
   const { theme, toggle } = useTheme()
   const toast = useToast()
@@ -60,6 +62,7 @@ export default function MypageClient({
   }
 
   async function handlePasswordChange() {
+    if (isDemo) return toast('デモアカウントのためパスワードは変更できません', 'info')
     if (newPassword.length < 6) return toast('パスワードは6文字以上で入力してください', 'info')
     if (newPassword !== confirmPassword) return toast('パスワードが一致しません', 'info')
     setPasswordSaving(true)
@@ -165,12 +168,16 @@ export default function MypageClient({
               </div>
               <div className="flex items-center justify-between py-3 text-sm">
                 <span className="text-foreground">パスワード変更</span>
-                <button
-                  onClick={() => setShowPasswordModal(true)}
-                  className="text-text-secondary text-xs hover:text-foreground transition cursor-pointer"
-                >
-                  変更する ›
-                </button>
+                {isDemo ? (
+                  <span className="text-text-secondary text-xs">デモアカウントのため変更不可</span>
+                ) : (
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="text-text-secondary text-xs hover:text-foreground transition cursor-pointer"
+                  >
+                    変更する ›
+                  </button>
+                )}
               </div>
               <div className="flex items-center justify-between py-3">
                 <span className="text-sm text-foreground">テーマ</span>

@@ -1,0 +1,49 @@
+{
+  "measuredAt": "2026-10-01T00:25:02.902Z",
+  "samples": 5,
+  "warmups": 1,
+  "results": [
+    {
+      "path": "/",
+      "medianMs": 70,
+      "minMs": 55,
+      "maxMs": 105,
+      "htmlBytes": 39936
+    },
+    {
+      "path": "/reviews",
+      "medianMs": 60,
+      "minMs": 52,
+      "maxMs": 109,
+      "htmlBytes": 33210
+    },
+    {
+      "path": "/diaries",
+      "medianMs": 49,
+      "minMs": 47,
+      "maxMs": 51,
+      "htmlBytes": 32773
+    },
+    {
+      "path": "/english",
+      "medianMs": 53,
+      "minMs": 50,
+      "maxMs": 68,
+      "htmlBytes": 31081
+    },
+    {
+      "path": "/words",
+      "medianMs": 52,
+      "minMs": 48,
+      "maxMs": 56,
+      "htmlBytes": 41090
+    },
+    {
+      "path": "/mypage",
+      "medianMs": 119,
+      "minMs": 98,
+      "maxMs": 204,
+      "htmlBytes": 37062
+    }
+  ]
+}

@@ -6,11 +6,14 @@ export default async function EditReviewPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: review } = await supabase.from('reviews').select('*').eq('id', id).single()
+  const [{ data: review, error: recordError }, { data: words, error: wordsError }] = await Promise.all([
+    supabase.from('reviews').select('*').eq('id', id).single(),
+    supabase
+    .from('words').select('word, description').eq('review_id', id).order('created_at', { ascending: true }),
+  ])
+  if (recordError && recordError.code !== 'PGRST116') throw new Error('記録の取得に失敗しました', { cause: recordError })
   if (!review) notFound()
-
-  const { data: words } = await supabase
-    .from('words').select('word, description').eq('review_id', id).order('created_at', { ascending: true })
+  if (wordsError) throw new Error('ワードの取得に失敗しました', { cause: wordsError })
 
   return (
     <EditReviewClient

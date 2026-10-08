@@ -1,15 +1,11 @@
 import Link from 'next/link'
+import { loadList, type SearchParams } from '@/lib/lists/query'
 import { createClient } from '@/lib/supabase/server'
 import EnglishLogsList from './EnglishLogsList'
 
-export default async function EnglishLogsPage() {
+export default async function EnglishLogsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const supabase = await createClient()
-  const { data: logs, error } = await supabase
-    .from('english_logs')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) console.error(error)
+  const { rows, state } = await loadList(supabase, 'english', await searchParams)
 
   return (
     <div className="p-4 md:p-8 w-full">
@@ -19,7 +15,7 @@ export default async function EnglishLogsPage() {
           + 新しい学習ログ
         </Link>
       </div>
-      <EnglishLogsList logs={logs ?? []} />
+      <EnglishLogsList logs={rows as unknown as Parameters<typeof EnglishLogsList>[0]['logs']} state={state} />
     </div>
   )
 }
