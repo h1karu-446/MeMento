@@ -21,10 +21,19 @@ async function getAuthedUser() {
 }
 
 // 入力チェック。問題があればエラーメッセージを返す
-function validateInput(text: string): string | null {
-  if (!text.trim()) return '入力が空です'
+// Server Action は任意の値を送れるので、型も実行時に確認する
+function validateInput(text: unknown): string | null {
+  if (typeof text !== 'string' || !text.trim()) return '入力が空です'
   if (text.length > MAX_INPUT_CHARS) return `入力は${MAX_INPUT_CHARS}文字以内にしてください`
   return null
+}
+
+function isLanguage(value: unknown): value is 'ja' | 'en' {
+  return value === 'ja' || value === 'en'
+}
+
+function isOptionalShortString(value: unknown): boolean {
+  return value === undefined || (typeof value === 'string' && value.length <= MAX_META_CHARS)
 }
 
 // stop_reason を確認してから、応答の text ブロックを取り出す
@@ -120,7 +129,10 @@ export async function proofreadText(
   if (!(await getAuthedUser())) return { ok: false, error: 'ログインが必要です' }
   const invalid = validateInput(text)
   if (invalid) return { ok: false, error: invalid }
-  if ((meta?.title?.length ?? 0) > MAX_META_CHARS || (meta?.genre?.length ?? 0) > MAX_META_CHARS) {
+  if (!isLanguage(language) || (context !== 'diary' && context !== 'review')) {
+    return { ok: false, error: '不正なリクエストです' }
+  }
+  if (!isOptionalShortString(meta?.title) || !isOptionalShortString(meta?.genre)) {
     return { ok: false, error: `作品名・ジャンルは${MAX_META_CHARS}文字以内にしてください` }
   }
 
@@ -156,6 +168,7 @@ export async function translateTextClaude(
   if (!(await getAuthedUser())) return { ok: false, error: 'ログインが必要です' }
   const invalid = validateInput(text)
   if (invalid) return { ok: false, error: invalid }
+  if (!isLanguage(from)) return { ok: false, error: '不正なリクエストです' }
 
   const system = from === 'ja'
     ? `あなたはプロの日英翻訳者です。日本語のテキストを自然な英語に翻訳してください。
