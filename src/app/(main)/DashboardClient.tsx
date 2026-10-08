@@ -69,7 +69,6 @@ export default function DashboardClient({
   diaries,
   weekActivity,
   streak,
-  userId,
   initialRecommendations,
   initialGeneratedAt,
 }: {
@@ -78,7 +77,6 @@ export default function DashboardClient({
   diaries: Diary[]
   weekActivity: boolean[]
   streak: number
-  userId: string
   initialRecommendations: Recommendation[] | null
   initialGeneratedAt: string | null
 }) {
@@ -140,10 +138,7 @@ export default function DashboardClient({
 
   async function handleGenerateRecommendation() {
     setRecLoading(true)
-    const res = await generateRecommendation({
-      reviews: reviews.map(r => ({ title: r.title, genre: r.genre, rate: r.rate })),
-      userId,
-    })
+    const res = await generateRecommendation()
     setRecLoading(false)
     if (!res.ok) return toast(`生成に失敗しました: ${res.error}`)
     setRecommendations(res.recommendations)

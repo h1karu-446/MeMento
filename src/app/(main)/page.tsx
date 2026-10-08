@@ -57,7 +57,6 @@ export default async function DashboardPage() {
         diaries={diaries ?? []}
         weekActivity={weekActivity}
         streak={streak}
-        userId={userId}
         initialRecommendations={(cachedRec?.content ?? null) as Recommendation[] | null}
         initialGeneratedAt={cachedRec?.generated_at ?? null}
       />

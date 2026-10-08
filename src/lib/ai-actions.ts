@@ -1,8 +1,55 @@
 'use server'
 
 import Anthropic from '@anthropic-ai/sdk'
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
+import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
 
 const client = new Anthropic()
+
+const MODEL = 'claude-haiku-5-5'
+const MAX_INPUT_CHARS = 5000
+const MAX_META_CHARS = 200
+
+type Failure = { ok: false; error: string }
+
+// ログイン中のユーザーを取得する（未ログインなら null）
+async function getAuthedUser() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user ? { supabase, user } : null
+}
+
+// 入力チェック。問題があればエラーメッセージを返す
+function validateInput(text: string): string | null {
+  if (!text.trim()) return '入力が空です'
+  if (text.length > MAX_INPUT_CHARS) return `入力は${MAX_INPUT_CHARS}文字以内にしてください`
+  return null
+}
+
+// stop_reason を確認してから、応答の text ブロックを取り出す
+// （Haiku 5.5 は先頭に thinking ブロックが来ることがあるので、位置ではなく type で探す）
+function extractText(response: Anthropic.Message): { ok: true; text: string } | Failure {
+  if (response.stop_reason === 'max_tokens') {
+    return { ok: false, error: 'AIの出力が途中で切れました。文章を短くして試してください。' }
+  }
+  if (response.stop_reason === 'refusal') {
+    return { ok: false, error: 'AIがこの内容への回答を控えました。' }
+  }
+  const block = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')
+  if (!block) return { ok: false, error: 'AIから回答を得られませんでした。' }
+  return { ok: true, text: block.text }
+}
+
+// 構造化出力の JSON をスキーマで検証する（失敗したら null）
+function parseJson<T>(text: string, schema: z.ZodType<T>): T | null {
+  try {
+    const result = schema.safeParse(JSON.parse(text))
+    return result.success ? result.data : null
+  } catch {
+    return null
+  }
+}
 
 const SYSTEM_PROMPTS = {
   diary: {
@@ -69,7 +116,14 @@ export async function proofreadText(
   language: 'ja' | 'en',
   context: 'diary' | 'review',
   meta?: { title?: string; genre?: string },
-): Promise<{ ok: true; result: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; result: string } | Failure> {
+  if (!(await getAuthedUser())) return { ok: false, error: 'ログインが必要です' }
+  const invalid = validateInput(text)
+  if (invalid) return { ok: false, error: invalid }
+  if ((meta?.title?.length ?? 0) > MAX_META_CHARS || (meta?.genre?.length ?? 0) > MAX_META_CHARS) {
+    return { ok: false, error: `作品名・ジャンルは${MAX_META_CHARS}文字以内にしてください` }
+  }
+
   const system = SYSTEM_PROMPTS[context][language]
 
   const content = meta?.title
@@ -78,15 +132,16 @@ export async function proofreadText(
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 2048,
+      model: MODEL,
+      max_tokens: 4096,
+      output_config: { effort: 'low' },
       system,
       messages: [{ role: 'user', content }],
     })
 
-    const block = response.content[0]
-    const result = block.type === 'text' ? block.text : text
-    return { ok: true, result }
+    const extracted = extractText(response)
+    if (!extracted.ok) return extracted
+    return { ok: true, result: extracted.text }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[proofreadText]', message)
@@ -97,7 +152,11 @@ export async function proofreadText(
 export async function translateTextClaude(
   text: string,
   from: 'ja' | 'en',
-): Promise<{ ok: true; result: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; result: string } | Failure> {
+  if (!(await getAuthedUser())) return { ok: false, error: 'ログインが必要です' }
+  const invalid = validateInput(text)
+  if (invalid) return { ok: false, error: invalid }
+
   const system = from === 'ja'
     ? `あなたはプロの日英翻訳者です。日本語のテキストを自然な英語に翻訳してください。
 - 日本語特有の慣用表現・比喩は、英語圏で自然に通じる表現に意訳する（例：「空気を読む」→「read the room」）
@@ -112,14 +171,15 @@ export async function translateTextClaude(
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 2048,
+      model: MODEL,
+      max_tokens: 4096,
+      output_config: { effort: 'low' },
       system,
       messages: [{ role: 'user', content: text }],
     })
-    const block = response.content[0]
-    const result = block.type === 'text' ? block.text : text
-    return { ok: true, result }
+    const extracted = extractText(response)
+    if (!extracted.ok) return extracted
+    return { ok: true, result: extracted.text }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[translateTextClaude]', message)
@@ -127,43 +187,47 @@ export async function translateTextClaude(
   }
 }
 
+const EnglishCheckSchema = z.object({
+  hasErrors: z.boolean(),
+  corrected: z.string(),
+  translation: z.string(),
+})
+
 export async function checkEnglishText(
   text: string,
 ): Promise<
   | { ok: true; corrected: string; hasErrors: boolean; translation: string }
-  | { ok: false; error: string }
+  | Failure
 > {
+  if (!(await getAuthedUser())) return { ok: false, error: 'ログインが必要です' }
+  const invalid = validateInput(text)
+  if (invalid) return { ok: false, error: invalid }
+
   const system = `あなたは日本人の英語学習者向けの英文チェッカーです。
 ユーザーが書いた英語の例文について、以下を行ってください。
 
-1. 文法・スペル・不自然な単語選びの誤りをチェックする
-2. 誤りがあれば自然な英語に修正する。誤りがなければ元の文をそのまま返す
-3. 修正後の文を自然な日本語に翻訳する
-
-必ず以下のJSON形式だけを返してください。説明・前置き・コードブロック（\`\`\`）は不要です。
-{"hasErrors": true または false, "corrected": "修正後の英文（誤りがなければ元の文と同じ）", "translation": "日本語訳"}`
+1. 文法・スペル・不自然な単語選びの誤りをチェックする（hasErrors）
+2. 誤りがあれば自然な英語に修正する。誤りがなければ元の文をそのまま返す（corrected）
+3. 修正後の文を自然な日本語に翻訳する（translation）`
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
+      model: MODEL,
+      max_tokens: 2048,
+      output_config: { effort: 'low', format: zodOutputFormat(EnglishCheckSchema) },
       system,
       messages: [{ role: 'user', content: text }],
     })
-    const block = response.content[0]
-    if (block.type !== 'text') return { ok: false, error: '予期しないレスポンス形式です' }
+    const extracted = extractText(response)
+    if (!extracted.ok) return extracted
 
-    const cleaned = block.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-
-    let parsed: { hasErrors: boolean; corrected: string; translation: string }
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch {
-      console.error('[checkEnglishText] JSONパース失敗:', cleaned)
+    const parsed = parseJson(extracted.text, EnglishCheckSchema)
+    if (!parsed) {
+      console.error('[checkEnglishText] スキーマ検証失敗:', extracted.text)
       return { ok: false, error: 'AIの返答を解析できませんでした。もう一度試してください。' }
     }
 
-    return { ok: true, corrected: parsed.corrected, hasErrors: parsed.hasErrors, translation: parsed.translation }
+    return { ok: true, ...parsed }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[checkEnglishText]', message)
@@ -207,23 +271,41 @@ export async function translateTextAzure(
   }
 }
 
-export type Recommendation = {
-  title: string
-  genre: string
-  reason: string
-  description: string
-}
+const RecommendationSchema = z.object({
+  title: z.string(),
+  genre: z.enum(['映画', '小説', '音楽']),
+  reason: z.string(),
+  description: z.string(),
+})
 
-export async function generateRecommendation(input: {
-  reviews: { title: string; genre: string; rate: number }[]
-  userId: string
-}): Promise<{ ok: true; recommendations: Recommendation[] } | { ok: false; error: string }> {
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
+// 件数は API 側で強制できない（minItems は 0/1 のみ）ため、スキーマでは制約せずプロンプトで指示する
+const RecommendationsSchema = z.object({
+  recommendations: z.array(RecommendationSchema),
+})
+
+export type Recommendation = z.infer<typeof RecommendationSchema>
+
+export async function generateRecommendation(): Promise<
+  { ok: true; recommendations: Recommendation[] } | Failure
+> {
+  const authed = await getAuthedUser()
+  if (!authed) return { ok: false, error: 'ログインが必要です' }
+  const { supabase, user } = authed
+
+  const { data: reviews, error: reviewsError } = await supabase
+    .from('reviews')
+    .select('title, genre, rate')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(300)
+  if (reviewsError) {
+    console.error('[generateRecommendation]', reviewsError.message)
+    return { ok: false, error: 'レビュー履歴の取得に失敗しました' }
+  }
 
   const genres = ['映画', '小説', '音楽'] as const
   const picked = genres.flatMap((genre) => {
-    const byGenre = input.reviews.filter(r => r.genre === genre)
+    const byGenre = (reviews ?? []).filter(r => r.genre === genre)
     // シャッフルして最大10件
     const shuffled = [...byGenre].sort(() => Math.random() - 0.5)
     return shuffled.slice(0, 10)
@@ -241,43 +323,40 @@ ${reviewSummary || 'なし'}
 このユーザーの趣味・好みに基づいて、次に楽しめそうな作品を4つおすすめしてください。
 映画・小説・音楽をバランスよく含めてください。
 
-必ず以下のJSON配列だけを返してください。説明・前置き・コードブロック（\`\`\`）は絶対に不要です。JSONのみ出力してください。
-[
-  {
-    "title": "作品名",
-    "genre": "映画 or 小説 or 音楽",
-    "reason": "おすすめ理由（自然な文章で本屋の営業になったつもりで。ユーザーの履歴を分析している感じは出さない）",
-    "description": "作品のあらすじや概要（2〜3文）"
-  }
-]`
+各項目の書き方：
+- title：作品名
+- genre：映画・小説・音楽のいずれか
+- reason：おすすめ理由（自然な文章で本屋の営業になったつもりで。ユーザーの履歴を分析している感じは出さない）
+- description：作品のあらすじや概要（2〜3文）`
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
+      model: MODEL,
+      max_tokens: 2048,
+      output_config: { effort: 'low', format: zodOutputFormat(RecommendationsSchema) },
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const block = response.content[0]
-    if (block.type !== 'text') return { ok: false, error: '予期しないレスポンス形式です' }
+    const extracted = extractText(response)
+    if (!extracted.ok) return extracted
 
-    // コードブロック（```json ... ```）を除去してからパース
-    const cleaned = block.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-
-    let recommendations: Recommendation[]
-    try {
-      recommendations = JSON.parse(cleaned)
-    } catch {
-      console.error('[generateRecommendation] JSONパース失敗:', cleaned)
-      return { ok: false, error: 'AIの返答をJSONとして解析できませんでした。もう一度試してください。' }
+    const parsed = parseJson(extracted.text, RecommendationsSchema)
+    const recommendations = parsed?.recommendations.slice(0, 4) ?? []
+    if (recommendations.length === 0) {
+      console.error('[generateRecommendation] スキーマ検証失敗または0件:', extracted.text)
+      return { ok: false, error: 'AIの返答を解析できませんでした。もう一度試してください。' }
     }
 
     // DBにupsert（user_idで上書き）
-    await supabase.from('ai_recommendations').upsert({
-      user_id: input.userId,
+    const { error: upsertError } = await supabase.from('ai_recommendations').upsert({
+      user_id: user.id,
       content: recommendations,
       generated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
+    if (upsertError) {
+      console.error('[generateRecommendation]', upsertError.message)
+      return { ok: false, error: 'おすすめの保存に失敗しました' }
+    }
 
     return { ok: true, recommendations }
   } catch (e) {
@@ -286,4 +365,3 @@ ${reviewSummary || 'なし'}
     return { ok: false, error: message }
   }
 }
-
